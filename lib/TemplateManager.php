@@ -38,6 +38,7 @@ use OCP\IL10N;
 use OCP\IURLGenerator;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use OCA\Templaterepo\Folder\FolderManager;
 
 class TemplateManager {
 
@@ -55,6 +56,9 @@ class TemplateManager {
 
 	/** @var IL10N */
 	private $l;
+
+	/** @var FolderManager */
+	private $folderManager;
 
 	/** @var IDBConnection */
 	private $db;
@@ -113,6 +117,7 @@ class TemplateManager {
 		IURLGenerator $urlGenerator,
 		IRootFolder $rootFolder,
 		IL10N $l,
+		FolderManager $folderManager,
 		IDBConnection $connection,
 		LoggerInterface $logger
 	) {
@@ -120,10 +125,37 @@ class TemplateManager {
 		$this->config = $config;
 		$this->rootFolder = $rootFolder;
 		$this->urlGenerator = $urlGenerator;
+		$this->folderManager = $folderManager;
 		$this->db = $connection;
 		$this->logger = $logger;
 		$this->appData = $appData;
 		$this->l = $l;
+		$this->folderid = null;
+	}
+
+	/**
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * Get templaterepo foldersId from apps/templaterepo
+	 *
+	 * @return DataResponse
+	 *
+	 */
+	private function getTemplaterepoFoldersId() {
+		$currentUser = \OC::$server->getUserSession()->getUser();
+		if ($currentUser) {
+			$data = $this->folderManager->getFoldersForUser($currentUser);
+			foreach($data as $folder) {
+				$folderId[] = $folder['folder_id'];
+			}
+		} else {
+			$data = $this->folderManager->getAllFolders();
+			foreach($data as $folder) {
+				$folderId[] = $folder['id'];
+			}
+		}
+		return $folderId;
 	}
 
 	private function ensureAppDataFolders() {
@@ -178,6 +210,16 @@ class TemplateManager {
 		$files = $templateDir->getById($fileId);
 		if ($files !== []) {
 			return $files[0];
+		}
+
+		$foldersId = $this->getTemplaterepoFoldersId();
+		foreach ($foldersId as $id) {
+			$files = $this->getTemplaterepoDir($id)->getDirectoryListing();
+			foreach ($files as $file) {
+				if ($file->getId() === $fileId) {
+					return $file;
+				}
+			}
 		}
 
 		throw new NotFoundException();
@@ -310,6 +352,32 @@ class TemplateManager {
 		}, $templates);
 	}
 
+ 	/**
+	 * Get templates in templaterepo
+	 *
+	 * @return File[]
+	 */
+	public function getTemplaterepo($folderId = null, $type = null) {
+		try {
+			$templateDir   = $this->getTemplaterepoDir($folderId);
+			$templateFiles = $templateDir->getDirectoryListing();
+			return $this->filterTemplates($templateFiles, $type);
+		} catch(NotFoundException $e) {
+			return [];
+		}
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getTemplaterepoFormatted($folderId = null, $type = null) {
+		$templates = $this->getTemplaterepo($folderId, $type);
+		$this->folderid = $folderId;
+		return array_map(function(File $file) {
+			return $this->formatNodeReturn($file, $this->folderid);
+		}, $templates);
+	}
+
 	/**
 	 * Get all templates
 	 *
@@ -318,12 +386,13 @@ class TemplateManager {
 	public function getAll($type = 'document') {
 		$system = $this->getSystem();
 		$user   = $this->getUser();
+		$templaterepo = $this->getTemplaterepo();
 
 		if (!array_key_exists($type, self::$tplTypes)) {
 			return [];
 		}
 
-		return array_values(array_filter(array_merge($user, $system), function (File $template) use ($type) {
+		return array_values(array_filter(array_merge($user, $system, $templaterepo), function (File $template) use ($type) {
 			foreach (self::$tplTypes[$type] as $mime) {
 				if ($template->getMimeType() === $mime) {
 					return true;
@@ -341,7 +410,17 @@ class TemplateManager {
 		$system = $this->getSystemFormatted($type);
 		$user   = $this->getUserFormatted($type);
 
-		return array_merge($system, $user);
+		$result = array_merge($system, $user);
+
+		// get templateRepo foldersId
+		$templaterepoFoldersId = $this->getTemplaterepoFoldersId();
+		if (count($templaterepoFoldersId) > 0) {
+			foreach($templaterepoFoldersId as $id) {
+				$templaterepo = $this->getTemplaterepoFormatted($id, $type);
+				$result = array_merge($result, $templaterepo);
+			}
+		}
+		return $result;
 	}
 
 	/**
@@ -442,6 +521,13 @@ class TemplateManager {
 	/**
 	 * @return Folder
 	 */
+	private function getTemplaterepoDir($folderId) {
+		return $this->rootFolder->get('__templaterepo')->get((string)$folderId);
+	}
+
+	/**
+	 * @return Folder
+	 */
 	private function getEmptyTemplateDir() {
 		$this->ensureAppDataFolders();
 		$path = 'appdata_' . $this->config->getSystemValue('instanceid', null) . '/richdocuments/empty_templates';
@@ -454,10 +540,10 @@ class TemplateManager {
 	 * @param File $template
 	 * @return array
 	 */
-	public function formatNodeReturn(File $template) {
+	public function formatNodeReturn(File $template, $templaterepoFolderId = null) {
 		$ooxml = $this->config->getAppValue(Application::APPNAME, 'doc_format', '') === 'ooxml';
 		$documentType = $this->flipTypes()[$template->getMimeType()];
-		return [
+		$formatNode = [
 			'id'        => $template->getId(),
 			'name'      => $template->getName(),
 			'preview'   => $this->urlGenerator->linkToRouteAbsolute('richdocuments.templates.getPreview', ['fileId' => $template->getId()]),
@@ -465,6 +551,13 @@ class TemplateManager {
 			'delete'    => $this->urlGenerator->linkToRouteAbsolute('richdocuments.templates.delete', ['fileId' => $template->getId()]),
 			'extension' => ($ooxml && isset(self::TYPE_EXTENSION_OOXML[$documentType])) ? self::TYPE_EXTENSION_OOXML[$documentType] : self::TYPE_EXTENTION[$documentType],
 		];
+
+		if ($templaterepoFolderId) {
+			$formatNode['templaterepoFolder'] = $templaterepoFolderId;
+			$formatNode['delete'] = null;
+			$formatNode['preview'] = $this->urlGenerator->linkToRouteAbsolute('core.Preview.getPreviewByFileId', ['fileId' => $template->getId(), 'x' => 170, 'y' => 240]);
+		}
+		return $formatNode;
 	}
 
 	public function isTemplate($fileId) {
@@ -473,6 +566,14 @@ class TemplateManager {
 		$user = $this->getUser();
 		/** @var File[] $all */
 		$all = array_merge($empty, $system, $user);
+
+		$foldersId = $this->getTemplaterepoFoldersId();
+		if (count($foldersId) > 0) {
+			foreach ($foldersId as $id) {
+				$templaterepo = $this->getTemplaterepo($id);
+				$all = array_merge($all, $templaterepo);
+			}
+		}
 
 		foreach ($all as $template) {
 			if ($template->getId() === $fileId) {
