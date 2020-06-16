@@ -204,6 +204,13 @@
     "Collabora Online" : "Collabora Online",
     "Document already exists" : "文件已存在",
     "Collabora Online is enabled for all users by default. When this setting is active, only members of the specified groups can use it." : "Collabora Online 預設對所有使用者啟用。當此設定啟用時，僅特定群組的使用者可以使用它。",
-    "Templates inside of this directory will be added to the template selector of Collabora Online." : "此目錄中的範本將會新增到 Collabora Online 的範本選取器中。"
+    "Current version" : "目前版本",
+    "New Document" : "新文件",
+    "New Spreadsheet" : "新試算表",
+    "New Presentation" : "新簡報",
+    "Templates inside of this directory will be added to the template selector of Collabora Online." : "此目錄中的範本將會新增到 Collabora Online 的範本選取器中。",
+    "User Templates" : "個人範本",
+    "Templaterepo" : "範本中心",
+    "No Template" : "無範本"
 },"pluralForm" :"nplurals=1; plural=0;"
 }

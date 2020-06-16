@@ -185,6 +185,13 @@ OC.L10N.register(
     "Collabora Online" : "Collabora Online",
     "Document already exists" : "文档已存在",
     "Collabora Online is enabled for all users by default. When this setting is active, only members of the specified groups can use it." : "Collabora Online（在线协作）已默认为所有用户启用。当此设置激活时，只有指定组的成员可以使用它。",
-    "Templates inside of this directory will be added to the template selector of Collabora Online." : "此目录中的模板将被添加到 Collabora Online 的模板选择器。"
+    "Current version" : "当前版本",
+    "New Document" : "新建文档",
+    "New Spreadsheet" : "新建表格",
+    "New Presentation" : "新建幻灯片",
+    "Templates inside of this directory will be added to the template selector of Collabora Online." : "此目录中的模板将被添加到在线协作的模板选择器。",
+    "User Templates" : "个人范本",
+    "Templaterepo" : "范本中心",
+    "No Template" : "无范本"
 },
 "nplurals=1; plural=0;");

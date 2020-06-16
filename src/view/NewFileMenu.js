@@ -148,6 +148,10 @@ const NewFileMenu = {
 						closeOnEscape: true,
 						modal: true,
 						buttons: buttonlist,
+					}).on('click', '.foldersTab label', function() {
+						$('.folderWrapper').each(function() {
+							$(this).toggleClass('hidden')
+						})
 					})
 				})
 		})
@@ -160,6 +164,8 @@ const NewFileMenu = {
 			const $dlg = $tmpl.octemplate({
 				dialog_name: 'template-picker',
 				dialog_title: t('richdocuments', 'Select template'),
+				defultTemplate_title: t('richdocuments', 'User Templates'),
+				templaterepo_title: t('richdocuments', 'Templaterepo')
 			})
 
 			// create templates list
@@ -169,6 +175,11 @@ const NewFileMenu = {
 			})
 
 			$('body').append($dlg)
+
+			if ($('.templaterepoFolder').children().length < 1) {
+				var emptyTextEl = `<em>${t('richdocuments', 'No Template')}</em>`
+				$('.templaterepoFolder').append(emptyTextEl).css('justify-content', 'center')
+			}
 		})
 	},
 
@@ -176,6 +187,16 @@ const NewFileMenu = {
 		const template = dlg.querySelector('.template-model').cloneNode(true)
 		template.className = ''
 		template.querySelector('img').src = generateUrl('apps/richdocuments/template/preview/' + data.id)
+
+		/**
+		 * odfweb 空白範本沒有縮圖
+		 */
+		if (!data.preview) {
+			template.querySelector('img').classList.add('emptyImg')
+		} else {
+			template.querySelector('img').src = data.preview
+		}
+
 		template.querySelector('h2').textContent = data.name
 		template.onclick = function(e) {
 			e.preventDefault()
@@ -185,7 +206,11 @@ const NewFileMenu = {
 			dlg.dataset.templateId = data.id
 		}
 
-		dlg.querySelector('.template-container').appendChild(template)
+		if (!data.templaterepoFolder) {
+			dlg.querySelector('.defultFolder').appendChild(template)
+		} else {
+			dlg.querySelector('.templaterepoFolder').appendChild(template)
+		}
 	},
 }
 
