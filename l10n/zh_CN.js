@@ -164,6 +164,9 @@ OC.L10N.register(
     "New Document" : "新建文档",
     "New Spreadsheet" : "新建表格",
     "New Presentation" : "新建幻灯片",
-    "Templates inside of this directory will be added to the template selector of Collabora Online." : "此目录中的模板将被添加到在线协作的模板选择器。"
+    "Templates inside of this directory will be added to the template selector of Collabora Online." : "此目录中的模板将被添加到在线协作的模板选择器。",
+    "User Templates" : "个人范本",
+    "Templaterepo" : "范本中心",
+    "No Template" : "无范本"
 },
 "nplurals=1; plural=0;");
