@@ -143,18 +143,18 @@ class TemplateManager {
 	 *
 	 */
 	private function getTemplaterepoFoldersId() {
-		$currentUser = \OC::$server->getUserSession()->getUser();
-		if ($currentUser) {
-			$data = $this->folderManager->getFoldersForUser($currentUser);
-			foreach($data as $folder) {
-				$folderId[] = $folder['folder_id'];
-			}
-		} else {
+		// $currentUser = \OC::$server->getUserSession()->getUser();
+		// if ($currentUser) {
+		// 	$data = $this->folderManager->getFoldersForUser($currentUser);
+		// 	foreach($data as $folder) {
+		// 		$folderId[] = $folder['folder_id'];
+		// 	}
+		// } else {
 			$data = $this->folderManager->getAllFolders();
 			foreach($data as $folder) {
 				$folderId[] = $folder['id'];
 			}
-		}
+		// }
 		return $folderId;
 	}
 
@@ -205,11 +205,14 @@ class TemplateManager {
 			}
 		}
 
-		$templateDir = $this->getUserTemplateDir();
-		// finally get the template file
-		$files = $templateDir->getById($fileId);
-		if ($files !== []) {
-			return $files[0];
+		$templateDirPath = $this->config->getUserValue($this->userId, $this->appName, 'templateFolder', false);
+		if ($templateDirPath) {
+			$templateDir = $this->getUserTemplateDir();
+			// finally get the template file
+			$files = $templateDir->getById($fileId);
+			if ($files !== []) {
+				return $files[0];
+			}
 		}
 
 		$foldersId = $this->getTemplaterepoFoldersId();
