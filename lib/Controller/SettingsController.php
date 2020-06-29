@@ -132,7 +132,8 @@ class SettingsController extends Controller{
 	                            $use_groups,
 	                            $doc_format,
 	                            $external_apps,
-	                            $canonical_webroot) {
+								$canonical_webroot,
+								$saveToOdf) {
 		$message = $this->l10n->t('Saved');
 
 		if ($wopi_url !== null){
@@ -170,6 +171,10 @@ class SettingsController extends Controller{
 			$this->appConfig->setAppValue('canonical_webroot', $canonical_webroot);
 		}
 
+		// odfweb
+		if ($saveToOdf !== null) {
+			$this->appConfig->setAppValue('saveToOdf', $saveToOdf);
+		}
 		$this->discoveryManager->refetch();
 		$this->capabilitiesService->clear();
 		try {

@@ -225,6 +225,14 @@ class WopiController extends Controller {
 			'SupportsLocks' => $this->lockManager->isLockProviderAvailable(),
 		];
 
+		// Odfweb 新增功能
+		$saveToOdf_extension = $this->shouldSaveToOdf($file->getMimeType());
+		if ($saveToOdf_extension) {
+			$response['UserExtraInfo'] = [
+				'SaveToOdf' => $saveToOdf_extension
+			];
+		}
+
 		if ($wopi->hasTemplateId()) {
 			$templateUrl = 'index.php/apps/richdocuments/wopi/template/' . $wopi->getTemplateId() . '?access_token=' . $wopi->getToken();
 			$templateUrl = $this->urlGenerator->getAbsoluteURL($templateUrl);
@@ -307,6 +315,36 @@ class WopiController extends Controller {
 		}
 
 		return $response;
+	}
+
+	/**
+	 * Odfweb 新增功能
+	 */
+    private function shouldSaveToOdf($mimetype) {
+		$saveToOdf = $this->config->getAppValue('richdocuments', 'saveToOdf', 'yes');
+		if ($saveToOdf === 'yes') {
+			$msMimes = [
+				'odt' => [
+					'application/msword',
+					'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+					'application/vnd.ms-word.document.macroEnabled.12'
+				],
+				'ods' => [
+					'application/vnd.ms-excel',
+					'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+					'application/vnd.ms-excel.sheet.macroEnabled.12'
+				],
+				'odp' => [
+					'application/vnd.ms-powerpoint',
+					'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+					'application/vnd.ms-powerpoint.presentation.macroEnabled.12'
+				]
+			];
+			foreach ($msMimes as $key => $m) {
+				if (in_array($mimetype, $m)) return $key;
+			}
+		}
+		return null;
 	}
 
 	private function shouldWatermark($isPublic, $userId, $fileId, Wopi $wopi) {

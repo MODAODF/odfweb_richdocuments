@@ -27,7 +27,7 @@ class AppConfig {
 		'watermark_allGroupsList' => [],
 		'watermark_allTagsList' => [],
 		'watermark_linkTagsList' => [],
-
+		'saveToOdf' => 'yes'
 	];
 
 	const WATERMARK_APP_NAMESPACE = 'files';

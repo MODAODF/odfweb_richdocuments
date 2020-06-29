@@ -207,6 +207,17 @@
 			</div>
 		</Modal>
 
+		<!-- section: [odfweb] savetoodf 自動轉換微軟 Office 格式為開放文件格式 -->
+		<div v-if="isSetup" id="online-savetoodf" class="section">
+			<h2>{{ t('richdocuments', 'Automatically convert Microsoft Office files to ODF files') }}</h2>
+			<p>
+				<input id="saveToOdf" v-model="settings.saveToOdf" class="checkbox"
+					type="checkbox" :disabled="updating" @change="updateSaveToOdf">
+				<label for="saveToOdf">{{ t('richdocuments', 'Enable automatically convert Microsoft Office files to ODF files') }}</label>
+				<em>{{ t('richdocuments', 'After enabling, it will automatically convert the MS format to the ODF format for online editing when users try to editing MS files.') }}</em>
+			</p>
+		</div>
+
 		<div v-if="isSetup" id="advanced-settings" class="section">
 			<h2>{{ t('richdocuments', 'Advanced settings') }}</h2>
 			<SettingsCheckbox :value="isOoxml"
@@ -408,6 +419,7 @@ export default {
 				external_apps: false,
 			},
 			settings: {
+				saveToOdf: true,
 				demoUrl: null,
 				wopi_url: null,
 				watermark: {
@@ -466,6 +478,12 @@ export default {
 			}
 
 		}
+
+		if (this.initial.settings.saveToOdf) {
+			// 初始化 saveToOdf 參數
+			Vue.set(this.settings, 'saveToOdf', this.initial.settings.saveToOdf)
+		}
+
 		Vue.set(this.settings, 'data', this.initial.settings)
 		if (this.settings.wopi_url === '') {
 			this.serverError = SERVER_STATE_CONNECTION_ERROR
@@ -562,6 +580,11 @@ export default {
 			this.settings.doc_format = enabled ? 'ooxml' : ''
 			await this.updateSettings({
 				doc_format: this.settings.doc_format,
+			})
+		},
+		async updateSaveToOdf() {
+			await this.updateSettings({
+				saveToOdf: this.settings.saveToOdf ? 'yes' : 'no'
 			})
 		},
 		async updateServer() {
