@@ -6,7 +6,7 @@ script('files', 'jquery.fileupload');
 ?>
 <div id="admin-vue" data-initial="<?php p(json_encode($_['settings'], true)); ?>"></div>
 
-<?php if ($_['settings']['templatesAvailable'] === true) { ?>
+<?php if (false /*$_['settings']['templatesAvailable'] === true*/) { ?>
 <form class="section" id="richdocuments-templates" method="post" action="/template/">
 	<input class="hidden-visually" id="add-template" type="file" />
 	<h2>

@@ -87,6 +87,10 @@ function deleteTemplate(event) {
  * Init the upload manager and the delete template handler
  */
 function initTemplateManager() {
+
+	// odfweb 取消全域範本
+	if ($('#richdocuments-templates').length < 1) return
+
 	const inputElmt = document.querySelector('#add-template')
 	const buttonElmt = document.querySelector('.icon-add')
 	const deleteElmts = document.querySelectorAll('.delete-template')
