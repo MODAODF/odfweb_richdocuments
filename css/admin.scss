@@ -121,3 +121,14 @@
 		}
 	}
 }
+
+/* personal settings*/
+#personal-odftemplate a {
+	font-weight: bold;
+	img {
+		vertical-align: text-bottom;
+	}
+	&:hover {
+		background-color: #46ba612b;
+	}
+}
