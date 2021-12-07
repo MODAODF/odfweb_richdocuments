@@ -2,19 +2,20 @@
 
 app_name=richdocuments
 project_dir=$(CURDIR)/../$(app_name)
-build_dir=$(CURDIR)/build/artifacts
-sign_dir=$(build_dir)/sign
-appstore_dir=$(build_dir)/appstore
-source_dir=$(build_dir)/source
 package_name=$(app_name)
-cert_dir=$(HOME)/.nextcloud/certificates
 occ=$(CURDIR)/../../occ
+target_dir=$(CURDIR)/build/
+version=6.1.0
 
 clean:
-	rm -fr $(build_dir)
+	rm -rf $(target_dir)
 
-appstore: clean
-	mkdir -p $(sign_dir)
+buildjs:
+	npm ci
+	npm run build
+
+apppackage: clean buildjs
+	mkdir -p $(target_dir)
 	rsync -a \
 	--exclude=.git \
 	--exclude=.github \
@@ -27,6 +28,8 @@ appstore: clean
 	--exclude=composer.lock \
 	--exclude=composer.phar \
 	--exclude=.tx \
+	--exclude=.vscode \
+	--exclude=.nextcloudignore \
 	--exclude=l10n/no-php \
 	--exclude=Makefile \
 	--exclude=nbproject \
@@ -34,9 +37,17 @@ appstore: clean
 	--exclude=phpunit*xml \
 	--exclude=tests \
 	--exclude=vendor/bin \
-	$(project_dir) $(sign_dir)
-	@echo "Signing…"
-	$(occ) integrity:sign-app --privateKey=$(cert_dir)/$(app_name).key --certificate=$(cert_dir)/$(app_name).crt --path=$(sign_dir)/$(app_name)
-	tar -czf $(build_dir)/$(app_name).tar.gz \
-		-C $(sign_dir) $(app_name)
-	openssl dgst -sha512 -sign $(cert_dir)/$(app_name).key $(build_dir)/$(app_name).tar.gz | openssl base64
+	--exclude=node_modules \
+	--exclude=package-lock.json \
+	--exclude=package.json \
+	--exclude=postcss.config.js \
+	--exclude=src \
+	--exclude=tsconfig.json \
+	--exclude=vendor \
+	--exclude=webpack.* \
+	--exclude=issue_template.md \
+	--exclude=krankerl.toml \
+	--exclude=mkdocs.yml \
+	$(project_dir) $(target_dir)
+	tar -czf $(target_dir)/$(app_name)-$(version).tar.gz \
+		-C $(target_dir) $(app_name)
