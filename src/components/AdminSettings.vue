@@ -78,7 +78,7 @@
 									v-model="settings.wopi_url"
 									type="text"
 									:disabled="updating">
-								<input type="submit" value="Save" :disabled="updating"><br>
+								<input type="submit" :value="t('richdocuments', 'Save')" :disabled="updating"><br>
 							</p>
 							<p>
 								<input id="disable_certificate_verification"
@@ -88,11 +88,12 @@
 									:disabled="updating"
 									@change="updateServer">
 								<label for="disable_certificate_verification">{{ t('richdocuments', 'Disable certificate verification (insecure)') }}</label><br>
-								<em>{{ t('Enable if your Collabora Online server uses a self signed certificate') }}</em>
+								<em>{{ t('richdocuments', 'Enable if your Collabora Online server uses a self signed certificate') }}</em>
 							</p>
 						</form>
 					</div>
 				</div>
+				<!--
 				<div v-if="CODECompatible">
 					<input id="builtinserver"
 						v-model="serverMode"
@@ -185,9 +186,11 @@
 						</p>
 					</div>
 				</div>
+				-->
 			</fieldset>
 		</div>
 
+		<!--
 		<Modal v-if="serverMode === 'demo' && !approvedDemoModal" @close="serverMode = 'custom'">
 			<div class="modal__content">
 				<p>{{ t('richdocuments', 'Please make sure you understand that the following will happen if you set up the Collabora Online demo.') }}</p>
@@ -206,6 +209,7 @@
 				<input type="button" :value="t('richdocuments', 'I will setup my own server')" @click="serverMode = 'custom'">
 			</div>
 		</Modal>
+		-->
 
 		<!-- section: [odfweb] 連結至 online 管理後台 -->
 		<div v-if="isSetup" id="config-console" class="section">
@@ -375,8 +379,8 @@ import Vue from 'vue'
 import { loadState } from '@nextcloud/initial-state'
 import { generateUrl, generateFilePath } from '@nextcloud/router'
 import { showWarning } from '@nextcloud/dialogs'
-import Multiselect from '@nextcloud/vue/dist/Components/Multiselect'
-import Modal from '@nextcloud/vue/dist/Components/Modal'
+// import Multiselect from '@nextcloud/vue/dist/Components/Multiselect'
+// import Modal from '@nextcloud/vue/dist/Components/Modal'
 import axios from '@nextcloud/axios'
 import SettingsCheckbox from './SettingsCheckbox'
 import SettingsInputText from './SettingsInputText'
@@ -398,9 +402,9 @@ export default {
 		SettingsInputText,
 		SettingsSelectTag,
 		SettingsSelectGroup,
-		Multiselect,
+		// Multiselect,
 		SettingsExternalApps,
-		Modal,
+		// Modal,
 	},
 	props: {
 		initial: {
@@ -648,12 +652,12 @@ export default {
 				this.serverMode = 'custom'
 				this.online.consoleUrl = this.settings.wopi_url + this.initial.online_admin_path
 			}
-			if (this.settings.demoUrl) {
-				this.serverMode = 'demo'
-				this.approvedDemoModal = true
-			} else if (this.settings.CODEUrl && this.settings.CODEUrl === this.settings.wopi_url) {
-				this.serverMode = 'builtin'
-			}
+			// if (this.settings.demoUrl) {
+			// 	this.serverMode = 'demo'
+			// 	this.approvedDemoModal = true
+			// } else if (this.settings.CODEUrl && this.settings.CODEUrl === this.settings.wopi_url) {
+			// 	this.serverMode = 'builtin'
+			// }
 		},
 		demoServerLabel(server) {
 			return `${server.provider_name} — ${server.provider_location}`

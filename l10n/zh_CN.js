@@ -173,6 +173,8 @@ OC.L10N.register(
     "After enabling, it will automatically convert the MS format to the ODF format for online editing when users try to editing MS files." : "启用自动转档功能后，当使用者尝试编辑微软格式的文件时，系统会生成一个新的 ODF 文件，让使用者编辑此档案。",
     "Open" : "前往",
     "【NDCODFWEB】" : "【ODF文件WEB应用元件】",
-    "config console" : "管理后台"
+    "config console" : "管理后台",
+    "Enable if your Collabora Online server uses a self signed certificate" : "若您的ODF文件WEB应用元件伺服器使用自行发行的凭证，请启用",
+    "All users can edit documents with Collabora Online by default. When this setting is active, only the members of the specified groups can edit and the others can only view documents." : "预设情况下所有使用者都能使用线上共编功能编辑文件，当此设定启用时，只有特定群组成员才能编辑文件，而其它使用者只能查看文件。"
 },
 "nplurals=1; plural=0;");
