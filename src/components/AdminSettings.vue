@@ -220,6 +220,18 @@
 			</div>
 		</NcModal>
 
+		<!-- section: [odfweb] 連結至 online 管理後台 -->
+		<div v-if="isSetup" id="config-console" class="section">
+			<h2>{{ t('richdocuments', 'config console') }}</h2>
+			<p>
+				{{ t('richdocuments', 'Open') }}
+				<a :href="online.consoleUrl" target="_blank">
+					{{ t('richdocuments', '【NDCODFWEB】') }} {{ t('richdocuments', 'config console') }}
+					<span class="icon icon-external" />
+				</a>
+			</p>
+		</div>
+
 		<!-- section: [odfweb] savetoodf 自動轉換微軟 Office 格式為開放文件格式 -->
 		<div v-if="isSetup" id="online-savetoodf" class="section">
 			<h2>{{ t('richdocuments', 'Automatically convert Microsoft Office files to ODF files') }}</h2>
@@ -476,6 +488,9 @@ export default {
 				canonical_webroot: false,
 				external_apps: false,
 			},
+			online: {
+				consoleUrl: null
+			},
 			settings: {
 				saveToOdf: true,
 				demoUrl: null,
@@ -703,6 +718,7 @@ export default {
 			this.settings.CODEUrl = this.CODEInstalled ? window.location.protocol + '//' + window.location.host + generateFilePath(this.CODEAppID, '', '') + 'proxy.php?req=' : null
 			if (this.settings.wopi_url && this.settings.wopi_url !== '') {
 				this.serverMode = 'custom'
+				this.online.consoleUrl = this.settings.wopi_url + this.initial.online_admin_path
 			}
 			if (this.settings.demoUrl) {
 				this.serverMode = 'demo'
@@ -795,6 +811,23 @@ export default {
 
 	input#wopi_url {
 		width: 300px;
+	}
+
+	#config-console {
+		a {
+			font-weight: bold;
+			&:hover {
+				background-color: #46ba612b;
+				text-decoration: underline;
+			}
+		}
+		span {
+			display: inline-block;
+			margin-left: 5px;
+			vertical-align: middle;
+			min-width: 13px;
+			min-height: 13px;
+		}
 	}
 
 	#secure-view-settings {
