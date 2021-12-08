@@ -76,6 +76,7 @@ class Admin implements ISettings {
 			[
 				'settings' => [
 					'wopi_url'           => $this->config->getAppValue('richdocuments', 'wopi_url'),
+					'online_admin_path'  => '/loleaflet/dist/admin/admin.html',
 					'wopi_allowlist'     => $this->config->getAppValue('richdocuments', 'wopi_allowlist'),
 					'edit_groups'        => $this->config->getAppValue('richdocuments', 'edit_groups'),
 					'use_groups'         => $this->config->getAppValue('richdocuments', 'use_groups'),
