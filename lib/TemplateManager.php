@@ -565,7 +565,7 @@ class TemplateManager {
 		if ($templaterepoFolderId) {
 			$formatNode['templaterepoFolder'] = $templaterepoFolderId;
 			$formatNode['delete'] = null;
-			$formatNode['preview'] = $this->urlGenerator->linkToRouteAbsolute('core.Preview.getPreviewByFileId', ['fileId' => $template->getId(), 'x' => 170, 'y' => 240]);
+			$formatNode['preview'] = $this->urlGenerator->linkToRouteAbsolute('richdocuments.templates.getPreview', ['fileId' => $template->getId()]);
 		}
 		return $formatNode;
 	}

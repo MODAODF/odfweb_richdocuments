@@ -34,12 +34,18 @@ use OCP\AppFramework\Http\NotFoundResponse;
 use OCP\Files\Node;
 use OCP\Files\NotFoundException;
 use OCP\Files\SimpleFS\ISimpleFile;
+use OCP\IConfig;
 use OCP\IL10N;
 use OCP\IPreview;
 use OCP\IRequest;
 use OC\Files\Filesystem;
+use OCP\IImage;
+use OCP\Image as OCPImage;
 
 class TemplatesController extends Controller {
+	/** @var IConfig */
+	private $config;
+
 	/** @var IL10N */
 	private $l10n;
 
@@ -57,12 +63,14 @@ class TemplatesController extends Controller {
 	 *
 	 * @param string $appName
 	 * @param IRequest $request
+	 * @param IConfig $config
 	 * @param L10N $l10n
 	 * @param TemplateManager $manager
 	 * @param IPreview $preview
 	 */
 	public function __construct($appName,
 								IRequest $request,
+								IConfig $config,
 								IL10N $l10n,
 								TemplateManager $manager,
 								IPreview $preview) {
@@ -70,6 +78,7 @@ class TemplatesController extends Controller {
 
 		$this->appName = $appName;
 		$this->request = $request;
+		$this->config  = $config;
 		$this->l10n    = $l10n;
 		$this->manager = $manager;
 		$this->preview = $preview;
@@ -111,7 +120,12 @@ class TemplatesController extends Controller {
 			return new DataResponse([], Http::STATUS_NOT_FOUND);
 		}
 
-		return $this->fetchPreview($template, $x, $y, $a, $forceIcon, $mode);
+		$response = $this->fetchPreview($template, $x, $y, $a, $forceIcon, $mode);
+		if (!$response instanceof FileDisplayResponse) {
+			// 如果無法轉檔預覽，用檔案的 Thumbnail 預覽
+			$response = $this->getTemplateThumbnail($template);
+		}
+		return $response;
 	}
 
 	/**
@@ -214,6 +228,77 @@ class TemplatesController extends Controller {
 			$response->cacheFor(3600 * 24);
 
 			return $response;
+		} catch (NotFoundException $e) {
+			return new DataResponse([], Http::STATUS_NOT_FOUND);
+		} catch (\InvalidArgumentException $e) {
+			return new DataResponse([], Http::STATUS_BAD_REQUEST);
+		}
+	}
+
+	/**
+	 * @return ISimpleFile
+	 */
+	private function getTemplateThumbnail($templateFile) {
+		$fileId = $templateFile->getId();
+		$filePath = $templateFile->getPath();
+		$dataFolder = $this->config->getSystemValue('datadirectory', \OC::$SERVERROOT . '/data');
+
+		$zip = new \ZipArchive;
+		$zipStat = $zip->open($dataFolder.$filePath);
+		if (!$zipStat) return false;
+		$im_string = $zip->getFromName('Thumbnails/thumbnail.png');
+		$zip->close();
+		if (!$im_string) {
+			return new DataResponse([], Http::STATUS_OK); // STATUS_NOT_FOUND
+		}
+		$im = imagecreatefromstring($im_string);
+
+		$instance = 'appdata_' . \OC::$server->getConfig()->getSystemValue('instanceid', null);
+		$previewFolder = \OC::$server->getRootFolder()->get($instance)->get('preview/');
+		try {
+			$fileIdFolder = $previewFolder->newFolder((string)$fileId);
+		} catch (\Exception $e) {
+			$fileIdFolder = $previewFolder->get('/' . (string)$fileId);
+		}
+
+		$preview = new OCPImage();
+		$preview->loadFromData($im_string);
+		if (!$preview->valid()) {
+			return new \InvalidArgumentException('Failed to generate preview, failed to load image');
+		}
+
+		$width = 170;
+		$height = 240;
+		if ($height !== $preview->height() && $width !== $preview->width()) {
+			//Resize
+			$widthR = $preview->width() / $width;
+			$heightR = $preview->height() / $height;
+
+			if ($widthR > $heightR) {
+				$scaleH = $height;
+				$scaleW = $width / $heightR;
+			} else {
+				$scaleH = $height / $widthR;
+				$scaleW = $width;
+			}
+			$preview->preciseResize((int)round($scaleW), (int)round($scaleH));
+		}
+		$cropX = (int)floor(abs($width - $preview->width()) * 0.5);
+		$cropY = 0;
+		$preview->crop($cropX, $cropY, $width, $height);
+
+		try {
+			$path = (string)$width . '-' . (string)$height . '.png';
+			$file = $fileIdFolder->newFile($path);
+			$file->putContent($preview->data());
+		} catch (NotPermittedException $e) {
+			return new NotFoundException();
+		}
+
+		try {
+			$resp = new FileDisplayResponse($file, Http::STATUS_OK, ['Content-Type' => $file->getMimeType()]);
+			$resp->cacheFor(3600 * 24);
+			return $resp;
 		} catch (NotFoundException $e) {
 			return new DataResponse([], Http::STATUS_NOT_FOUND);
 		} catch (\InvalidArgumentException $e) {
