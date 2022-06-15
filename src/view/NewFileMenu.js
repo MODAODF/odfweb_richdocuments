@@ -189,7 +189,7 @@ const NewFileMenu = {
 			$('body').append($dlg)
 
 			if ($('.templaterepoFolder').children().length < 1) {
-				var emptyTextEl = `<em>${t('richdocuments', 'No Template')}</em>`
+				const emptyTextEl = `<em>${t('richdocuments', 'No Template')}</em>`
 				$('.templaterepoFolder').append(emptyTextEl).css('justify-content', 'center')
 			}
 		})

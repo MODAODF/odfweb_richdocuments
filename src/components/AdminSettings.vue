@@ -227,8 +227,12 @@
 		<div v-if="isSetup" id="online-savetoodf" class="section">
 			<h2>{{ t('richdocuments', 'Automatically convert Microsoft Office files to ODF files') }}</h2>
 			<p>
-				<input id="saveToOdf" v-model="settings.saveToOdf" class="checkbox"
-					type="checkbox" :disabled="updating" @change="updateSaveToOdf">
+				<input id="saveToOdf"
+					class="checkbox"
+					v-model="settings.saveToOdf"
+					type="checkbox"
+					:disabled="updating"
+					@change="updateSaveToOdf">
 				<label for="saveToOdf">{{ t('richdocuments', 'Enable automatically convert Microsoft Office files to ODF files') }}</label>
 				<em>{{ t('richdocuments', 'After enabling, it will automatically convert the MS format to the ODF format for online editing when users try to editing MS files.') }}</em>
 			</p>
@@ -652,12 +656,12 @@ export default {
 				this.serverMode = 'custom'
 				this.online.consoleUrl = this.settings.wopi_url + this.initial.online_admin_path
 			}
-			// if (this.settings.demoUrl) {
-			// 	this.serverMode = 'demo'
-			// 	this.approvedDemoModal = true
-			// } else if (this.settings.CODEUrl && this.settings.CODEUrl === this.settings.wopi_url) {
-			// 	this.serverMode = 'builtin'
-			// }
+			/* if (this.settings.demoUrl) {
+				this.serverMode = 'demo'
+				this.approvedDemoModal = true
+			} else if (this.settings.CODEUrl && this.settings.CODEUrl === this.settings.wopi_url) {
+				this.serverMode = 'builtin'
+			} */
 		},
 		demoServerLabel(server) {
 			return `${server.provider_name} — ${server.provider_location}`
