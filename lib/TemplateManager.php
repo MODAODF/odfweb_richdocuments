@@ -393,7 +393,17 @@ class TemplateManager {
 	public function getAll($type = 'document') {
 		$system = $this->getSystem();
 		$user   = $this->getUser();
-		$templaterepo = $this->folderManager ? $this->getTemplaterepo() : [];
+		$templaterepo = [];
+
+		// 取得範本中心各目錄裡的範本檔
+		if ($this->folderManager) {
+			$foldersId = $this->getTemplaterepoFoldersId();
+			if (count($foldersId) > 0) {
+				foreach ($foldersId as $id) {
+					$templaterepo = array_merge($templaterepo, $this->getTemplaterepo($id));
+				}
+			}
+		}
 
 		if (!array_key_exists($type, self::$tplTypes)) {
 			return [];
