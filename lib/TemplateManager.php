@@ -414,6 +414,16 @@ class TemplateManager {
 		$user = $this->getUser();
 		$templaterepo = $this->folderManager ? $this->getTemplaterepo() : [];
 
+		// 取得範本中心各目錄裡的範本檔
+		if ($this->folderManager) {
+			$foldersId = $this->getTemplaterepoFoldersId();
+			if (count($foldersId) > 0) {
+				foreach ($foldersId as $id) {
+					$templaterepo = array_merge($templaterepo, $this->getTemplaterepo($id));
+				}
+			}
+		}
+
 		return array_values(array_filter(array_merge($user, $system, $templaterepo), function (File $template) use ($type) {
 			foreach (self::$tplTypes[$type] as $mime) {
 				if ($template->getMimeType() === $mime) {
