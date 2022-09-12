@@ -145,10 +145,12 @@ class Application extends App implements IBootstrap {
 			$eventDispatcher->addListener(LoadViewer::class, function () use ($initialStateService) {
 				$initialStateService->provideCapabilities();
 				\OCP\Util::addScript('richdocuments', 'richdocuments-viewer', 'viewer');
+				\OCP\Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
 			});
 			$eventDispatcher->addListener('OCA\Files_Sharing::loadAdditionalScripts', function () use ($initialStateService) {
 				$initialStateService->provideCapabilities();
 				\OCP\Util::addScript('richdocuments', 'richdocuments-files');
+				\OCP\Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
 			});
 
 			if (class_exists('\OC\Files\Type\TemplateManager')) {

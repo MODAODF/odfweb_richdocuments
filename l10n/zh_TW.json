@@ -173,6 +173,10 @@
     "【NDCODFWEB】" : "【ODF文件WEB應用元件】",
     "config console" : "管理後台",
     "Enable if your Collabora Online server uses a self signed certificate" : "若您的ODF文件WEB應用元件伺服器使用自行發行的憑證，請啟用",
-    "All users can edit documents with Collabora Online by default. When this setting is active, only the members of the specified groups can edit and the others can only view documents." : "預設情況下所有使用者都能使用ODF文件WEB應用元件編輯文件，當此設定啟用時，只有特定群組成員才能編輯文件，而其它使用者只能查看文件。"
+    "All users can edit documents with Collabora Online by default. When this setting is active, only the members of the specified groups can edit and the others can only view documents." : "預設情況下所有使用者都能使用ODF文件WEB應用元件編輯文件，當此設定啟用時，只有特定群組成員才能編輯文件，而其它使用者只能查看文件。",
+    "Save as PDF" : "轉存為 PDF",
+    "Get PDF": "取得 PDF",
+    "Upload PDF": "PDF 檔案同步至雲端",
+    "Finish PDF": "完成轉存為 PDF"
 },"pluralForm" :"nplurals=1; plural=0;"
 }

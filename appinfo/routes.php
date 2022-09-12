@@ -64,6 +64,10 @@ return [
 		['name' => 'templates#getPreview', 'url' => '/template/preview/{fileId}', 'verb' => 'GET'],
 		['name' => 'templates#add', 'url' => '/template', 'verb' => 'POST'],
 		['name' => 'templates#delete', 'url' => '/template/{fileId}', 'verb' => 'DELETE'],
+
+		// PDF
+		['name' => 'PDF#toPDF', 'url' => '/pdf/topdf', 'verb' => 'GET'],
+		['name' => 'PDF#checkConnect', 'url' => '/pdf/check', 'verb' => 'GET'],
 	],
 	'ocs' => [
 		['name' => 'documentAPI#create', 'url' => '/api/v1/file', 'verb' => 'POST'],
