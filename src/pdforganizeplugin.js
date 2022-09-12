@@ -101,7 +101,7 @@
 					displayName: t('richdocuments', 'Save as PDF'),
 					mime,
 					permissions: OC.PERMISSION_READ,
-					icon: OC.imagePath('core', 'actions/verifying'),
+					icon: OC.imagePath('richdocuments', 'topdf'),
 					actionHandler: toPDF
 				})
 			}
