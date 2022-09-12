@@ -206,6 +206,10 @@ OC.L10N.register(
     "Collabora Online" : "Collabora Online",
     "Document already exists" : "文件已存在",
     "Collabora Online is enabled for all users by default. When this setting is active, only members of the specified groups can use it." : "Collabora Online 預設對所有用戶啟用。當此設定啟用時，僅特定群組的用戶可以使用它。",
-    "Templates inside of this directory will be added to the template selector of Collabora Online." : "此目錄中的範本將會新增到 Collabora Online 的範本選擇器中。"
+    "Templates inside of this directory will be added to the template selector of Collabora Online." : "此目錄中的範本將會新增到 Collabora Online 的範本選擇器中。",
+    "Save as PDF" : "轉存為 PDF",
+    "Get PDF": "取得 PDF",
+    "Upload PDF": "PDF 檔案同步至雲端",
+    "Finish PDF": "完成轉存為 PDF"
 },
 "nplurals=1; plural=0;");
