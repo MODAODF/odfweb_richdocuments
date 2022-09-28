@@ -251,6 +251,31 @@
 			</p>
 		</div>
 
+		<!-- section: [odfweb] 確認編輯器 convert-to 啟用狀態 -->
+		<div v-if="isSetup" id="online-convertto" class="section">
+			<h2>
+				{{ t('richdocuments', 'File convert') }}
+				<span class="status" :class="{ success:isConvertAvailable, error:!isConvertAvailable }"></span>
+			</h2>
+			<div v-if="isConvertAvailable">
+				<div>{{ t('richdocuments', 'The [convet-to] of the {productName} is available', {productName: this.productName}) }}</div><br>
+				<div>
+					<input id="allowConvert"
+						class="checkbox"
+						v-model="settings.allowConvert"
+						type="checkbox"
+						:disabled="updating"
+						@change="updateAllowConvertto">
+					<label for="allowConvert">{{ t('richdocuments', 'Enable convert files') }}</label>
+					<em>{{ t('richdocuments', 'After enabling, the file conversion options will display in action menu of file list') }}</em>
+				</div>
+			</div>
+			<div v-else>
+				<span class="icon icon-error" />
+				<span>{{ t('richdocuments', 'The [convet-to] of the {productName} is unavailable', {productName: this.productName}) }}</span>
+			</div>
+		</div>
+
 		<div v-if="isSetup" id="advanced-settings" class="section">
 			<h2>{{ t('richdocuments', 'Advanced settings') }}</h2>
 			<SettingsCheckbox :value="isOoxml"
@@ -496,6 +521,7 @@ export default {
 			fontHintUrl: window.location.protocol + '//' + window.location.host + generateUrl('/apps/richdocuments/settings/fonts.json'),
 			groups: [],
 			tags: [],
+			isConvertAvailable: false,
 			uiVisible: {
 				canonical_webroot: false,
 				external_apps: false,
@@ -505,6 +531,7 @@ export default {
 			},
 			settings: {
 				saveToOdf: true,
+				allowConvert: false,
 				demoUrl: null,
 				wopi_url: null,
 				watermark: {
@@ -580,6 +607,12 @@ export default {
 		if (this.initial.settings.saveToOdf) {
 			// 初始化 saveToOdf 參數
 			Vue.set(this.settings, 'saveToOdf', this.initial.settings.saveToOdf)
+		}
+
+		// 初始化 convert-to 參數
+		this.isConvertAvailable = this.initial.isConvertAvailable
+		if (this.initial.settings.allowConvert) {
+			Vue.set(this.settings, 'allowConvert', this.initial.settings.allowConvert)
 		}
 
 		Vue.set(this.settings, 'data', this.initial.settings)
@@ -684,6 +717,11 @@ export default {
 		async updateSaveToOdf() {
 			await this.updateSettings({
 				saveToOdf: this.settings.saveToOdf ? 'yes' : 'no'
+			})
+		},
+		async updateAllowConvertto() {
+			await this.updateSettings({
+				allowConvert: this.settings.allowConvert ? 'yes' : 'no'
 			})
 		},
 		async updateServer() {
@@ -839,6 +877,12 @@ export default {
 			vertical-align: middle;
 			min-width: 13px;
 			min-height: 13px;
+		}
+	}
+
+	#online-convertto {
+		.status {
+			vertical-align: baseline;
 		}
 	}
 
