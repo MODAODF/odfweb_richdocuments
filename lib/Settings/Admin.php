@@ -84,6 +84,8 @@ class Admin implements ISettings {
 					'external_apps'      => $this->config->getAppValue('richdocuments', 'external_apps'),
 					'canonical_webroot'  => $this->config->getAppValue('richdocuments', 'canonical_webroot'),
 					'saveToOdf'          => $this->config->getAppValue('richdocuments', 'saveToOdf'),
+					'isConvertAvailable' => $this->capabilitiesService->isConvertAvailable(),
+					'allowConvert'       => $this->config->getAppValue('richdocuments', 'allowConvert'),
 					'disable_certificate_verification' => $this->config->getAppValue('richdocuments', 'disable_certificate_verification', '') === 'yes',
 					'templates'          => $this->manager->getSystemFormatted(),
 					'templatesAvailable' => $this->capabilitiesService->hasTemplateSaveAs() || $this->capabilitiesService->hasTemplateSource(),

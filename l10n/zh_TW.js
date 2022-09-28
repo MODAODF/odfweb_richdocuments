@@ -179,6 +179,11 @@ OC.L10N.register(
     "Save as PDF" : "轉存為 PDF",
     "Get PDF": "取得 PDF",
     "Upload PDF": "PDF 檔案同步至雲端",
-    "Finish PDF": "完成轉存為 PDF"
+    "Finish PDF": "完成轉存為 PDF",
+    "File convert": "轉檔功能",
+    "The [convet-to] of the {productName} is available": "{productName}的轉檔功能已啟用",
+    "Enable convert files": "開放轉檔",
+    "After enabling, the file conversion options will display in action menu of file list": "開放轉檔後，檔案列表中將顯示轉檔相關的操作選項",
+    "The [convet-to] of the {productName} is unavailable": "{productName}的轉檔功能未啟用"
 },
 "nplurals=1; plural=0;");

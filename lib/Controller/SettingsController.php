@@ -133,7 +133,8 @@ class SettingsController extends Controller{
 	                            $doc_format,
 	                            $external_apps,
 								$canonical_webroot,
-								$saveToOdf) {
+								$saveToOdf,
+								$allowConvert) {
 		$message = $this->l10n->t('Saved');
 
 		if ($wopi_url !== null){
@@ -175,6 +176,12 @@ class SettingsController extends Controller{
 		if ($saveToOdf !== null) {
 			$this->appConfig->setAppValue('saveToOdf', $saveToOdf);
 		}
+
+		// odfweb
+		if ($allowConvert !== null) {
+			$this->appConfig->setAppValue('allowConvert', $allowConvert);
+		}
+
 		$this->discoveryManager->refetch();
 		$this->capabilitiesService->clear();
 		try {

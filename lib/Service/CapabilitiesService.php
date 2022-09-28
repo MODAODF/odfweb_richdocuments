@@ -105,6 +105,13 @@ class CapabilitiesService {
 		return $this->l10n->t('Nextcloud Office');
 	}
 
+	/**
+	 * convert-to 是否啟用
+	 */
+	public function isConvertAvailable() {
+		return $this->getCapabilities()['convert-to']['available'] ?? false;
+	}
+
 	public function clear(): void {
 		$this->cache->remove('capabilities');
 	}
