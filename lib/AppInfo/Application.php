@@ -326,6 +326,6 @@ class Application extends App implements IBootstrap {
 	 */
 	private function checkPdfConvert ():bool {
 		$pdf = $this->getContainer()->query(PDFController::class);
-		return $pdf->checkConvert();
+		return $pdf->userLogin() && $pdf->checkConvert();
 	}
 }
