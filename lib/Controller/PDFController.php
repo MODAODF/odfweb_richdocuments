@@ -12,26 +12,31 @@ declare(strict_types=1);
 
 namespace OCA\Richdocuments\Controller;
 
-use OCP\AppFramework\Controller;
-use OCP\AppFramework\Http\ContentSecurityPolicy;
-use OCP\AppFramework\Http\TemplateResponse;
-use OCP\AppFramework\Http\DataResponse;
-use OCP\AppFramework\Http\DataDisplayResponse;
+use OC\Files\View;
+use OCP\ILogger;
 use OCP\IRequest;
-use OCP\IURLGenerator;
-use \OCA\Richdocuments\AppConfig;
 use OCP\AppFramework\Http;
-use OCP\Files\IRootFolder;
+use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\DataDisplayResponse;
+use OCP\Http\Client\IClientService;
+use \OCA\Richdocuments\AppConfig;
+use \OCA\Richdocuments\Service\CapabilitiesService;
 
 class PDFController extends Controller
 {
 
-    /** @var IURLGenerator */
-    private $urlGenerator;
+    private const API_CONVERT_PDF = "/lool/convert-to/pdf";
+
     /** @var AppConfig */
     private $appConfig;
-    /** @var IRootFolder */
-    private $rootFolder;
+    /** @var View */
+    private $fileview;
+    /** @var ILogger */
+	private $logger;
+    /** @var CapabilitiesService */
+	private $capabilitiesService;
+	/** @var IClientService */
+	private $clientService;
 
     /**
      * @param string $AppName
@@ -42,41 +47,45 @@ class PDFController extends Controller
         string $AppName,
         AppConfig $appConfig,
         IRequest $request,
-        IURLGenerator $urlGenerator,
-        IRootFolder $rootFolder
+        ILogger $logger,
+        View $fileview,
+        IClientService $clientService,
+        CapabilitiesService $capabilitiesService
     ) {
         parent::__construct($AppName, $request);
-        $this->urlGenerator = $urlGenerator;
         $this->appConfig = $appConfig;
-        $this->rootFolder = $rootFolder;
+        $this->logger = $logger;
+        $this->fileview = $fileview;
+		$this->clientService = $clientService;
+        $this->capabilitiesService = $capabilitiesService;
     }
 
+	/**
+	 * Check convert-to is available and enabled
+     *
+     * @NoAdminRequired
+     *
+	 * @return bool
+	 */
+	public function checkConvert ():bool {
+		if (!$this->capabilitiesService->isConvertAvailable()) {
+            return false;
+        }
+		$allowConvert = $this->appConfig->getAppValue('allowConvert');
+		return $allowConvert === 'yes';
+	}
+
     /**
-     * @PublicPage
+     * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param bool $minmode
-     * @return TemplateResponse
+     * @return DataDisplayResponse
      */
-    public function checkConnect()
-    {
-        $apiUrl = $this->domainOnly($this->appConfig->getAppValue('public_wopi_url')) . "/lool/oxpdf/check";
-        $curl = curl_init();
-        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_URL, $apiUrl);
-        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 2);
-        curl_setopt($curl, CURLOPT_TIMEOUT, 2);
-        $res = curl_exec($curl);
-        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        if ($httpCode != 200) {
-            curl_close($curl);
-            if($httpCode == 0){
-                $res = "伺服器無法連接";
-            }
-            return new DataDisplayResponse($res, $httpCode);
+    public function checkConnect() {
+        if (!$this->checkConvert()) {
+            return new DataDisplayResponse('未開放轉檔或伺服器無法連接，請聯絡系統管理員', HTTP::STATUS_NOT_FOUND);
         }
-        return new DataDisplayResponse($res, $httpCode);
+        return new DataDisplayResponse();
     }
 
     /**
@@ -85,8 +94,7 @@ class PDFController extends Controller
      * @param string $url
      * @return string
      */
-    private function domainOnly($url)
-    {
+    private function domainOnly($url) {
         $parsed_url = parse_url($url);
         $scheme = isset($parsed_url['scheme']) ? $parsed_url['scheme'] . '://' : '';
         $host   = isset($parsed_url['host']) ? $parsed_url['host'] : '';
@@ -96,68 +104,66 @@ class PDFController extends Controller
     }
 
     /**
+     * @return string
+     */
+    private function getApiUrl() {
+        return $this->domainOnly($this->appConfig->getAppValue('public_wopi_url')) . self::API_CONVERT_PDF;
+    }
+
+    /**
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param bool $minmode
-     * @return TemplateResponse
+     * @param string $filename
+     * @return DataDisplayResponse
      */
-    public function toPDF($file)
-    {
-        $apiUrl = $this->domainOnly($this->appConfig->getAppValue('public_wopi_url')) . "/lool/oxpdf/merge";
-        $curl = curl_init();
-        curl_setopt($curl, CURLOPT_POST, true);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_POSTFIELDS, '333');
-        curl_setopt($curl, CURLOPT_URL, $apiUrl);
-        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 10);
-        curl_setopt($curl, CURLOPT_TIMEOUT, 10);
-        $res = curl_exec($curl);
-        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        if ($httpCode != 200) {
-            print_r($res);
-            curl_close($curl);
-            if($httpCode == 0){
-                $res = "伺服器無法連接";
-            }
-            return new DataDisplayResponse($res, $httpCode);
-        }
-        $data["access_token"] = str_replace("\"", "", $res);
-        $fileHA=array();
-        $filePath = explode("webdav", $file)[1];
-        $fileN = \OC::$server->getUserFolder()->get($filePath);
-        $tmph = tmpfile();
-        fwrite($tmph, $fileN->getContent());
-        $tmpf = stream_get_meta_data($tmph)['uri'];
-        $data['pdf1'] =  curl_file_create($tmpf, $fileN->getMimetype(), $fileN->getName());
-        array_push($fileHA, $tmph);
-        curl_close($curl);
-        $curl = curl_init();
-        curl_setopt($curl, CURLOPT_POST, true);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_URL, $apiUrl);
-        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 90);
-        curl_setopt($curl, CURLOPT_TIMEOUT, 90);
+    public function toPDF($file) {
+        if (!$file) return new DataDisplayResponse('無法取得檔案', HTTP::STATUS_NOT_FOUND);
 
-        $res = curl_exec($curl);
-        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        if ($httpCode != 200) {
-            curl_close($curl);
-            if($httpCode == 0){
-                $res = "伺服器無法連接";
+        $filePath = explode("webdav", $file)[1];
+        $fileNode = \OC::$server->getUserFolder()->get($filePath);
+        $fileInfo = $this->fileview->getFileInfo($fileNode->getPath());
+		if (!$fileInfo || $fileInfo->getSize() === 0) {
+            return new DataDisplayResponse('無法取得檔案', HTTP::STATUS_NOT_FOUND);
+		}
+
+        $stream = $this->fileview->fopen($fileNode->getPath(), 'r');
+
+        $client = $this->clientService->newClient();
+		$options = ['timeout' => 10];
+        $options['multipart'] = [['name' => $fileInfo->getName(), 'contents' => $stream]];
+        if ($this->appConfig->getAppValue('disable_certificate_verification') === 'yes') {
+			$options['verify'] = false;
+		}
+		try {
+			$resp = $client->post($this->getApiUrl(), $options);
+            $respBody = $resp->getBody();
+            if ($resp->getStatusCode() != 200) {
+                throw new \Exception();
             }
-            return new DataDisplayResponse($res, $httpCode);
-        }
-        $temp_pointer = tmpfile();
-        fwrite($temp_pointer, $res);
-        $metaDatas = stream_get_meta_data($temp_pointer);
-        $tmpFilename = $metaDatas['uri'];
-        $response = new DataDisplayResponse($res);
-        $response->addHeader('Content-type', "application/pdf");
-        $response->addHeader('Content-Disposition', 'attachment; filename="result.pdf"');
+
+            // Check converted file
+            $tmpFile = tmpfile();
+            fwrite($tmpFile, $respBody);
+            $metaDatas = stream_get_meta_data($tmpFile);
+            $tmpFilename = $metaDatas['uri'];
+            $size = filesize($tmpFilename);
+            $mime = mime_content_type($tmpFilename);
+            fclose($tmpFile);
+            if ($size == 0 || $mime !== 'application/pdf') {
+                throw new \Exception();
+            }
+
+		} catch (\Exception $e) {
+			$this->logger->logException($e, [
+				'message' => 'Failed to convert file to PDF',
+				'level' => ILogger::INFO,
+				'app' => 'richdocuments',
+			]);
+			return false;
+		}
+
+        $response = new DataDisplayResponse($respBody);
         return $response;
     }
 }

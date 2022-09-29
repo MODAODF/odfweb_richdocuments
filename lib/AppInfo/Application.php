@@ -30,6 +30,7 @@ use OC\Security\CSP\ContentSecurityPolicy;
 use OCA\Files_Sharing\Listener\LoadAdditionalListener;
 use OCA\Richdocuments\AppConfig;
 use OCA\Richdocuments\Capabilities;
+use OCA\Richdocuments\Controller\PDFController;
 use OCA\Richdocuments\Middleware\WOPIMiddleware;
 use OCA\Richdocuments\Listener\FileCreatedFromTemplateListener;
 use OCA\Richdocuments\PermissionManager;
@@ -145,12 +146,16 @@ class Application extends App implements IBootstrap {
 			$eventDispatcher->addListener(LoadViewer::class, function () use ($initialStateService) {
 				$initialStateService->provideCapabilities();
 				\OCP\Util::addScript('richdocuments', 'richdocuments-viewer', 'viewer');
-				\OCP\Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
+				if ($this->checkPdfConvert()) {
+					\OCP\Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
+				}
 			});
 			$eventDispatcher->addListener('OCA\Files_Sharing::loadAdditionalScripts', function () use ($initialStateService) {
 				$initialStateService->provideCapabilities();
 				\OCP\Util::addScript('richdocuments', 'richdocuments-files');
-				\OCP\Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
+				if ($this->checkPdfConvert()) {
+					\OCP\Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
+				}
 			});
 
 			if (class_exists('\OC\Files\Type\TemplateManager')) {
@@ -312,5 +317,15 @@ class Application extends App implements IBootstrap {
 		$host	= isset($parsed_url['host']) ? $parsed_url['host'] : '';
 		$port	= isset($parsed_url['port']) ? ':' . $parsed_url['port'] : '';
 		return "$scheme$host$port";
+	}
+
+	/**
+	 * Check convert-to enabled before addScript pdforganizeplugin
+	 *
+	 * @return bool
+	 */
+	private function checkPdfConvert ():bool {
+		$pdf = $this->getContainer()->query(PDFController::class);
+		return $pdf->checkConvert();
 	}
 }

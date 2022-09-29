@@ -7,8 +7,7 @@
 	OCA.FilesPdfEditor.PreviewPlugin = {
 		supportMimetype: ['pdf', 'odt', 'ods', 'odp', 'doc', 'ppt', 'xls', 'docx', 'pptx', 'xlsx'],
 		attach(fileList) {
-			const url = new URL(window.location.href)
-			if (url.searchParams.get('view') === 'trashbin') {
+			if (fileList.id === 'trashbin') {
 				return
 			}
 			this._extendFileActions(fileList)
@@ -88,14 +87,10 @@
 				// 'application/vnd.ms-powerpoint.template.macroEnabled.12',
 				// 'application/vnd.ms-powerpoint.slideshow.macroEnabled.12',
 				// 'text/csv',
-				'application/pdf'
+				// 'application/pdf'
 			]
 
 			for (const mime of supportedMimes) {
-				// PDF do not neet convert
-				if (mime === 'application/pdf') {
-					continue
-				}
 				fileList.fileActions.registerAction({
 					name: '_toPDF',
 					displayName: t('richdocuments', 'Save as PDF'),
@@ -107,11 +102,17 @@
 			}
 
 			async function toPDF(fileName, context) {
-				const response = await fetch(OC.generateUrl('/apps/richdocuments/pdf/check'))
-				if (!response.ok) {
+				try {
+					const response = await fetch(OC.generateUrl('/apps/richdocuments/pdf/check'))
+					if (!response.ok) {
+						const msg = await response.text()
+						throw msg
+					}
+				} catch (error) {
 					OC.dialogs.alert('PDF 功能沒有反應，請聯繫系統管理人員。', t('richdocuments', 'Error'))
 					return
 				}
+
 				fileList._operationProgressBar.showProgressBar(false)
 				fileList._operationProgressBar.setProgressBarValue(0)
 				fileList._operationProgressBar.setProgressBarText(t('richdocuments', 'Save as PDF'), null, null)
