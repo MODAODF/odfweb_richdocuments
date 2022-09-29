@@ -31,6 +31,7 @@ use OCA\Richdocuments\Listener\BeforeFetchPreviewListener;
 use OCA\Richdocuments\Listener\CSPListener;
 use OCA\Richdocuments\Listener\LoadViewerListener;
 use OCA\Richdocuments\Listener\ShareLinkListener;
+use OCA\Richdocuments\Controller\PDFController;
 use OCA\Richdocuments\Middleware\WOPIMiddleware;
 use OCA\Richdocuments\Listener\FileCreatedFromTemplateListener;
 use OCA\Richdocuments\PermissionManager;
