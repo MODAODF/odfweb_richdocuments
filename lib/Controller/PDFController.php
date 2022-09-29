@@ -13,6 +13,8 @@ declare(strict_types=1);
 namespace OCA\Richdocuments\Controller;
 
 use OC\Files\View;
+use OCP\IUser;
+use OCP\IUserSession;
 use OCP\ILogger;
 use OCP\IRequest;
 use OCP\AppFramework\Http;
@@ -37,6 +39,8 @@ class PDFController extends Controller
 	private $capabilitiesService;
 	/** @var IClientService */
 	private $clientService;
+    /** @var IUserSession */
+	private $userSession;
 
     /**
      * @param string $AppName
@@ -50,7 +54,8 @@ class PDFController extends Controller
         ILogger $logger,
         View $fileview,
         IClientService $clientService,
-        CapabilitiesService $capabilitiesService
+        CapabilitiesService $capabilitiesService,
+        IUserSession $userSession
     ) {
         parent::__construct($AppName, $request);
         $this->appConfig = $appConfig;
@@ -58,6 +63,7 @@ class PDFController extends Controller
         $this->fileview = $fileview;
 		$this->clientService = $clientService;
         $this->capabilitiesService = $capabilitiesService;
+        $this->userSession = $userSession;
     }
 
 	/**
@@ -82,6 +88,9 @@ class PDFController extends Controller
      * @return DataDisplayResponse
      */
     public function checkConnect() {
+        if (!$this->userLogin()) {
+            return new DataDisplayResponse('無操作權限', HTTP::STATUS_FORBIDDEN);
+        }
         if (!$this->checkConvert()) {
             return new DataDisplayResponse('未開放轉檔或伺服器無法連接，請聯絡系統管理員', HTTP::STATUS_NOT_FOUND);
         }
@@ -101,6 +110,17 @@ class PDFController extends Controller
         $port   = isset($parsed_url['port']) ? ':' . $parsed_url['port'] : '';
         $path   = isset($parsed_url['path']) ? $parsed_url['path'] : '';
         return "$scheme$host$port$path";
+    }
+
+    /**
+     * @return bool
+     */
+    public function userLogin() {
+        $user = $this->userSession->getUser();
+		if (!$user instanceof IUser) {
+            return false;
+        }
+        return ($user ? true : false);
     }
 
     /**

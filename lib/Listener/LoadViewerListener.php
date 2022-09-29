@@ -68,6 +68,6 @@ class LoadViewerListener implements IEventListener {
 	private function checkPdfConvert(): bool {
 		$application = \OC::$server->get(Application::class);
 		$pdf = $application->getContainer()->query(PDFController::class);
-		return $pdf->checkConvert();
+		return $pdf->userLogin() && $pdf->checkConvert();
 	}
 }
