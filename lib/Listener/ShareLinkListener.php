@@ -36,7 +36,7 @@ use OCP\EventDispatcher\IEventListener;
 use OCP\Share\IShare;
 use OCP\Util;
 use OCA\Richdocuments\AppInfo\Application;
-use OCA\Richdocuments\Controller\PDFController;
+use OCA\Richdocuments\ConvertApi;
 
 /** @template-implements IEventListener<Event|ShareLinkAccessedEvent> */
 class ShareLinkListener implements \OCP\EventDispatcher\IEventListener {
@@ -63,15 +63,16 @@ class ShareLinkListener implements \OCP\EventDispatcher\IEventListener {
 			$this->initialStateService->provideCapabilities();
 			Util::addScript('richdocuments', 'richdocuments-files');
 			Util::addScript('richdocuments', 'richdocuments-viewer', 'viewer');
-			if ($this->checkPdfConvert()) {
+			if ($this->checkConvert()) {
 				Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
+				Util::addScript('richdocuments', 'richdocuments-odfconvert');
 			}
 		}
 	}
 
-	private function checkPdfConvert(): bool {
+	private function checkConvert(): bool {
 		$application = \OC::$server->get(Application::class);
-		$pdf = $application->getContainer()->query(PDFController::class);
-		return $pdf->userLogin() && $pdf->checkConvert();
+		$convertApi = $application->getContainer()->query(ConvertApi::class);
+		return $convertApi->isAvailable();
 	}
 }

@@ -69,9 +69,9 @@ return [
 		['name' => 'templates#add', 'url' => '/template', 'verb' => 'POST'],
 		['name' => 'templates#delete', 'url' => '/template/{fileId}', 'verb' => 'DELETE'],
 
-		// PDF
-		['name' => 'PDF#toPDF', 'url' => '/pdf/topdf', 'verb' => 'GET'],
-		['name' => 'PDF#checkConnect', 'url' => '/pdf/check', 'verb' => 'GET'],
+		// Convert-to
+		['name' => 'convert#checkStatus', 'url' => '/convert/check', 'verb' => 'GET'],
+		['name' => 'convert#convertFile', 'url' => '/convert/{type}', 'verb' => 'GET'],
 	],
 	'ocs' => [
 		// Public pages: new file creation

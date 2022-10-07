@@ -35,7 +35,7 @@ use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\Util;
 use OCA\Richdocuments\AppInfo\Application;
-use OCA\Richdocuments\Controller\PDFController;
+use OCA\Richdocuments\ConvertApi;
 
 /** @template-implements IEventListener<Event|LoadViewer> */
 class LoadViewerListener implements IEventListener {
@@ -59,15 +59,16 @@ class LoadViewerListener implements IEventListener {
 		if ($this->permissionManager->isEnabledForUser() && $this->userId !== null) {
 			$this->initialStateService->provideCapabilities();
 			Util::addScript('richdocuments', 'richdocuments-viewer', 'viewer');
-			if ($this->checkPdfConvert()) {
+			if ($this->checkConvert()) {
 				Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
+				Util::addScript('richdocuments', 'richdocuments-odfconvert');
 			}
 		}
 	}
 
-	private function checkPdfConvert(): bool {
+	private function checkConvert(): bool {
 		$application = \OC::$server->get(Application::class);
-		$pdf = $application->getContainer()->query(PDFController::class);
-		return $pdf->userLogin() && $pdf->checkConvert();
+		$convertApi = $application->getContainer()->query(ConvertApi::class);
+		return $convertApi->isAvailable();
 	}
 }

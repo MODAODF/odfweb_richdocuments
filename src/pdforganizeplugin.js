@@ -18,76 +18,17 @@
 		 * @private
 		 */
 		_extendFileActions(fileList) {
-			/*
-			Extension MIME Type
-			.doc      application/msword
-			.dot      application/msword
 
-			.docx     application/vnd.openxmlformats-officedocument.wordprocessingml.document
-			.dotx     application/vnd.openxmlformats-officedocument.wordprocessingml.template
-			.docm     application/vnd.ms-word.document.macroEnabled.12
-			.dotm     application/vnd.ms-word.template.macroEnabled.12
-
-			.xls      application/vnd.ms-excel
-			.xlt      application/vnd.ms-excel
-			.xla      application/vnd.ms-excel
-
-			.xlsx     application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
-			.xltx     application/vnd.openxmlformats-officedocument.spreadsheetml.template
-			.xlsm     application/vnd.ms-excel.sheet.macroEnabled.12
-			.xltm     application/vnd.ms-excel.template.macroEnabled.12
-			.xlam     application/vnd.ms-excel.addin.macroEnabled.12
-			.xlsb     application/vnd.ms-excel.sheet.binary.macroEnabled.12
-
-			.ppt      application/vnd.ms-powerpoint
-			.pot      application/vnd.ms-powerpoint
-			.pps      application/vnd.ms-powerpoint
-			.ppa      application/vnd.ms-powerpoint
-
-			.pptx     application/vnd.openxmlformats-officedocument.presentationml.presentation
-			.potx     application/vnd.openxmlformats-officedocument.presentationml.template
-			.ppsx     application/vnd.openxmlformats-officedocument.presentationml.slideshow
-			.ppam     application/vnd.ms-powerpoint.addin.macroEnabled.12
-			.pptm     application/vnd.ms-powerpoint.presentation.macroEnabled.12
-			.potm     application/vnd.ms-powerpoint.template.macroEnabled.12
-			.ppsm     application/vnd.ms-powerpoint.slideshow.macroEnabled.12
-
-			.mdb      application/vnd.ms-access
-			*/
 			const supportedMimes = [
 				'application/vnd.oasis.opendocument.text',
 				'application/vnd.oasis.opendocument.spreadsheet',
-				'application/vnd.oasis.opendocument.graphics',
 				'application/vnd.oasis.opendocument.presentation',
-				// 'application/vnd.lotus-wordpro',
-				// 'application/vnd.visio',
-				// 'application/vnd.ms-visio.drawing',
-				// 'application/vnd.wordperfect',
-				// 'application/msonenote',
 				'application/msword',
-				// 'application/rtf',
-				// 'text/rtf',
 				'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-				// 'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
-				// 'application/vnd.ms-word.document.macroEnabled.12',
-				// 'application/vnd.ms-word.template.macroEnabled.12',
 				'application/vnd.ms-excel',
 				'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-				// 'application/vnd.openxmlformats-officedocument.spreadsheetml.template',
-				// 'application/vnd.ms-excel.sheet.macroEnabled.12',
-				// 'application/vnd.ms-excel.template.macroEnabled.12',
-				// 'application/vnd.ms-excel.addin.macroEnabled.12',
-				// 'application/vnd.ms-excel.sheet.binary.macroEnabled.12',
 				'application/vnd.ms-powerpoint',
 				'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-				// 'application/vnd.openxmlformats-officedocument.presentationml.template',
-				// 'application/vnd.openxmlformats-officedocument.presentationml.slideshow',
-				// 'application/vnd.ms-powerpoint.addin.macroEnabled.12',
-				// 'application/vnd.ms-powerpoint.presentation.macroEnabled.12',
-				// 'application/vnd.ms-powerpoint.template.macroEnabled.12',
-				// 'application/vnd.ms-powerpoint.slideshow.macroEnabled.12',
-				// 'text/csv',
-				// 'application/pdf'
 			]
 
 			for (const mime of supportedMimes) {
@@ -103,7 +44,7 @@
 
 			async function toPDF(fileName, context) {
 				try {
-					const response = await fetch(OC.generateUrl('/apps/richdocuments/pdf/check'))
+					const response = await fetch(OC.generateUrl('/apps/richdocuments/convert/check'))
 					if (!response.ok) {
 						const msg = await response.text()
 						throw msg
@@ -118,7 +59,7 @@
 				fileList._operationProgressBar.setProgressBarText(t('richdocuments', 'Save as PDF'), null, null)
 				fileList._operationProgressBar.hideCancelButton()
 				const downloadUrl = context.fileList.getDownloadUrl(fileName, context.dir)
-				const url = OC.generateUrl('/apps/richdocuments/pdf/topdf') + '?file=' + downloadUrl
+				const url = OC.generateUrl('/apps/richdocuments/convert/pdf') + '?file=' + downloadUrl
 				fetch(url).then(response => {
 					if (!response.ok) {
 						fileList._operationProgressBar.hideProgressBar()
