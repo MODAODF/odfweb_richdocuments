@@ -1,4 +1,4 @@
-// 轉檔 doc -> odf 批次/單獨
+/* eslint no-throw-literal: 0 */
 
 ((function(OCA) {
 
@@ -46,7 +46,7 @@
 			for (const mime of self.supportedMimetype) {
 				fileList.fileActions.registerAction({
 					name: 'convertodf',
-					displayName: t('richdocuments', '轉存為 ODF'),
+					displayName: t('richdocuments', 'Save as ODF'),
 					mime,
 					permissions: OC.PERMISSION_READ,
 					iconClass: 'icon-projects',
@@ -56,7 +56,7 @@
 
 			fileList.multiSelectMenuItems.push({
 				name: 'convertodf',
-				displayName: t('richdocuments', '批次轉存為 ODF'),
+				displayName: t('richdocuments', 'Save as ODF'),
 				iconClass: 'icon-projects',
 				action: self._multiFiles
 			})
@@ -65,10 +65,9 @@
 			fileList.$el.find('.selectedActions').append(fileList.fileMultiSelectMenu.$el)
 		},
 
-		_singleFile(fileName, context) {
+		async _singleFile(fileName, context) {
 			const self = OCA.RichDocuments.OdfConvert
-			if (self._checkApi()) {
-
+			if (await self._checkApi()) {
 				self.progressTotal = 1
 				self.progressLoaded = 0
 				self.fileList._operationProgressBar.showProgressBar(false)
@@ -103,72 +102,91 @@
 
 			const formatHTML = function() {
 				const ListEl = supportFiles.map(file => `<li>${file.name}</li>`).join('')
-				return `<p>下列 ${supportFiles.length} 個文件將轉存為 ODF 格式文件：</p>
-					<ul style="margin-left:40px;list-style:disc;"><small><em>${ListEl}</em></small></ul><br>
-					<p><b>確認進行轉檔？</b></p>`
+				let string = '<p>' + t('richdocuments', 'The following {num} files will be convert to ODF format:', { num: supportFiles.length }) + '</p>'
+				string += '<ul style="margin-left:40px;list-style:disc;"><small><em>' + ListEl + '</em></small></ul><br>'
+				return string
 			}
 
-			const cb = async function(result) {
+			const startProgress = async function(destinationDir) {
 				const self = OCA.RichDocuments.OdfConvert
-				if (!result || !self._checkApi()) return
+				const destinationPath = self.fileList._currentDirectory + '/' + destinationDir
 
-				const destinationDir = 'ODF-' + Date.now()
-				await self.fileList.createDirectory(destinationDir)
-					.catch(() => {
-						OC.dialogs.alert('無法建立轉檔資料夾', t('richdocuments', 'Error'))
-						return false
-					})
-					.then(() => {
-						const destinationPath = self.fileList._currentDirectory + '/' + destinationDir
+				self.progressTotal = supportFiles.length
+				self.progressLoaded = 0
+				self.fileList._operationProgressBar.showProgressBar(false)
+				self._updateProgress(0)
 
-						self.progressTotal = supportFiles.length
-						self.progressLoaded = 0
-						self.fileList._operationProgressBar.showProgressBar(false)
-						self._updateProgress(0)
-
-						const actions = supportFiles.map(file => {
-							const url = self._getUrl(file.name, file.path, destinationPath)
-							return fetch(url)
-								.then(response => {
-									self.progressLoaded += 1
-									self._updateProgress(self.progressLoaded)
-									return {
-										filename: file.name,
-										response
-									}
-								})
+				const actions = supportFiles.map(file => {
+					const url = self._getUrl(file.name, file.path, destinationPath)
+					return fetch(url)
+						.then(response => {
+							self.progressLoaded += 1
+							self._updateProgress(self.progressLoaded)
+							return {
+								filename: file.name,
+								response
+							}
 						})
+				})
 
-						Promise.all(actions)
-							.then(resultArr => {
-								const failResult = resultArr.filter(result => (!result.response.ok))
-								if (failResult.length !== 0) {
-
-									for (const result of failResult) {
-										const name = result.filename
-										result.response.text()
-											.then((text) => {
-												console.debug(`ODF轉檔失敗(${name}): ${text}`)
-											})
-									}
-
-									if (failResult.length === supportFiles.length) {
-										try {
-											self.fileList.do_delete(destinationDir)
-										} catch (error) {}
-									}
-
-									OC.dialogs.alert(`${failResult.length}個檔案轉檔失敗`, t('richdocuments', 'Error'))
-								}
-								self.fileList.reload()
-							})
+				Promise.all(actions)
+					.then(resultArr => {
+						const failResult = resultArr.filter(result => (!result.response.ok))
+						if (failResult.length !== 0) {
+							for (const result of failResult) {
+								const name = result.filename
+								result.response.text()
+									.then((text) => {
+										console.debug(`ODF轉檔失敗(${name}): ${text}`)
+									})
+							}
+							OC.dialogs.alert(
+								t('richdocuments', 'Failed to convert files ({num})', { num: failResult.length }),
+								t('richdocuments', 'Error')
+							)
+						}
+						self.fileList.reload()
 					})
+			}
+
+			const askDirname = function(errMsg = null) {
+				OC.dialogs.prompt(
+					t('richdocuments', 'A new folder will be created to store the converted files, please set a new folder name'),
+					t('core', 'Settings'),
+					async function(result, value) {
+						if (result) {
+							try {
+								const isValidName = OCA.Files.Files.isFileNameValid(value)
+								if (!isValidName) throw t('richdocuments', 'Invalid name')
+
+								await self.fileList.createDirectory(value)
+									.then(
+										function() { return value },
+										function() { throw t('richdocuments', 'Could not create folder') }
+									).then(startProgress)
+							} catch (error) {
+								askDirname(error) // ask again with error
+							}
+						}
+					},
+					true,
+					t('richdocuments', 'New folder name'),
+					false
+				).then(function() {
+					if (errMsg) {
+						const $input = $('.oc-dialog:visible').find('input[type=text]')
+						$input.css('border-color', 'red')
+						$(`<small>${errMsg}<small>`).insertAfter($input).css('color', 'red')
+					}
+				})
 			}
 
 			OC.dialogs.confirmHtml(
 				formatHTML(),
-				t('richdocuments', '確認'),
-				cb,
+				t('core', 'Confirm'),
+				async function(confirm) {
+					if (confirm && await self._checkApi()) askDirname()
+				},
 				true
 			)
 		},
@@ -185,7 +203,10 @@
 					throw msg
 				}
 			} catch (error) {
-				OC.dialogs.alert('轉檔功能沒有反應或尚未啟用，請聯繫系統管理人員。', t('richdocuments', 'Error'))
+				OC.dialogs.alert(
+					t('richdocuments', 'The [Save as ODF] is not working or unavailable, please contact the system administrator'),
+					t('richdocuments', 'Error')
+				)
 				return false
 			}
 			return true
@@ -200,14 +221,15 @@
 			const bar = this.fileList._operationProgressBar
 			bar.setProgressBarValue((Math.round(loaded / total * 100)))
 			if (loaded === total) {
-				bar.setProgressBarText(t('richdocuments', `Finish (${loaded}/${total})`), null, null)
+				bar.setProgressBarText(t('richdocuments', 'Finish ODF ({loaded}/{total})', { loaded, total }), null, null)
 				setTimeout(function() {
 					bar.hideProgressBar()
 					bar.setProgressBarText('')
 				}, 1500)
 			} else {
-				bar.setProgressBarText(t('richdocuments', `Converting...(${loaded}/${total})`), null, null)
+				bar.setProgressBarText(t('richdocuments', 'Converting...({loaded}/{total})', { loaded, total }), null, null)
 			}
+			$(bar.$el).find('.stop').hide()
 		},
 
 		/**
