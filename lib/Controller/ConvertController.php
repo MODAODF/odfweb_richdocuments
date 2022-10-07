@@ -158,7 +158,7 @@ class ConvertController extends Controller {
         try {
             $this->convertApi->convert($fileInfo, $type);
             if (!$this->convertApi->isSuccess()) {
-                throw '';
+                throw new \Exception();
             }
 
             // Create new file

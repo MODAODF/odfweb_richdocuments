@@ -58,7 +58,6 @@ class ConvertApi {
         $this->userSession = $userSession;
 
         $this->respStatus = false;
-        $this->respError = null;
         $this->respBody = null;
     }
 
@@ -109,7 +108,6 @@ class ConvertApi {
      * @return DataDisplayResponse
      */
     public function convert($fileInfo, $type) {
-
         $stream = $this->fileview->fopen($fileInfo->getPath(), 'r');
 
         $client = $this->clientService->newClient();
@@ -121,32 +119,32 @@ class ConvertApi {
 
 		try {
 			$resp = $client->post($this->getApiUrl($type), $options);
-            $respBody = $resp->getBody();
             if ($resp->getStatusCode() != 200) {
                 throw new \Exception();
             }
 
             // Check converted file
+            $respBody = $resp->getBody();
             $tmpFile = tmpfile();
             fwrite($tmpFile, $respBody);
             $metaDatas = stream_get_meta_data($tmpFile);
             $tmpFilename = $metaDatas['uri'];
             $size = filesize($tmpFilename);
-            $mime = mime_content_type($tmpFilename);
+            // $mime = mime_content_type($tmpFilename);
             fclose($tmpFile);
-            if ($size == 0) throw new \Exception();
-
+            if ($size > 0) {
+                $this->respStatus = true;
+                $this->respBody = $respBody;
+            } else {
+                throw new \Exception();
+            }
 		} catch (\Exception $e) {
 			$this->logger->logException($e, [
-				'message' => 'Failed to convert file to PDF',
+				'message' => 'Failed to convert file:' . $e->getMessage(),
 				'level' => ILogger::INFO,
 				'app' => 'richdocuments',
 			]);
-            $this->respError = $e;
 		}
-
-        $this->respStatus = true;
-        $this->respBody = $respBody;
     }
 
     /**
