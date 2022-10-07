@@ -30,7 +30,7 @@ use OC\Security\CSP\ContentSecurityPolicy;
 use OCA\Files_Sharing\Listener\LoadAdditionalListener;
 use OCA\Richdocuments\AppConfig;
 use OCA\Richdocuments\Capabilities;
-use OCA\Richdocuments\Controller\PDFController;
+use OCA\Richdocuments\ConvertApi;
 use OCA\Richdocuments\Middleware\WOPIMiddleware;
 use OCA\Richdocuments\Listener\FileCreatedFromTemplateListener;
 use OCA\Richdocuments\PermissionManager;
@@ -146,17 +146,20 @@ class Application extends App implements IBootstrap {
 			$eventDispatcher->addListener(LoadViewer::class, function () use ($initialStateService) {
 				$initialStateService->provideCapabilities();
 				\OCP\Util::addScript('richdocuments', 'richdocuments-viewer', 'viewer');
-				if ($this->checkPdfConvert()) {
+				if ($this->checkConvert()) {
 					\OCP\Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
+					\OCP\Util::addScript('richdocuments', 'richdocuments-odfconvert');
 				}
 			});
-			$eventDispatcher->addListener('OCA\Files_Sharing::loadAdditionalScripts', function () use ($initialStateService) {
-				$initialStateService->provideCapabilities();
-				\OCP\Util::addScript('richdocuments', 'richdocuments-files');
-				if ($this->checkPdfConvert()) {
-					\OCP\Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
-				}
-			});
+
+			// $eventDispatcher->addListener('OCA\Files_Sharing::loadAdditionalScripts', function () use ($initialStateService) {
+			// 	$initialStateService->provideCapabilities();
+			// 	\OCP\Util::addScript('richdocuments', 'richdocuments-files');
+			// 	if ($this->checkConvert()) {
+			// 		\OCP\Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
+			// 		\OCP\Util::addScript('richdocuments', 'richdocuments-odfconvert');
+			// 	}
+			// });
 
 			if (class_exists('\OC\Files\Type\TemplateManager')) {
 				$manager = \OC_Helper::getFileTemplateManager();
@@ -324,8 +327,8 @@ class Application extends App implements IBootstrap {
 	 *
 	 * @return bool
 	 */
-	private function checkPdfConvert ():bool {
-		$pdf = $this->getContainer()->query(PDFController::class);
-		return $pdf->userLogin() && $pdf->checkConvert();
+	private function checkConvert():bool {
+		$convert = $this->getContainer()->query(ConvertApi::class);
+		return $convert->isAvailable();
 	}
 }

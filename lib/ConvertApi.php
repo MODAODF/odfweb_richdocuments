@@ -1,16 +1,15 @@
 <?php
-
-declare(strict_types=1);
 /**
- * @author Lukas Reschke
- * @copyright 2014 Lukas Reschke lukas@owncloud.com
+ * ownCloud - Richdocuments App
+ *
+ * @author Victor Dubiniuk
+ * @copyright 2015 Victor Dubiniuk victor.dubiniuk@gmail.com
  *
  * This file is licensed under the Affero General Public License version 3 or
  * later.
- * See the COPYING-README file.
  */
 
-namespace OCA\Richdocuments\Controller;
+namespace OCA\Richdocuments;
 
 use OC\Files\View;
 use OCP\IUser;
@@ -23,11 +22,11 @@ use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\Http\Client\IClientService;
 use \OCA\Richdocuments\AppConfig;
 use \OCA\Richdocuments\Service\CapabilitiesService;
+use OCP\Files\FileInfo;
 
-class PDFController extends Controller
-{
+class ConvertApi {
 
-    private const API_CONVERT_PDF = "/lool/convert-to/pdf";
+    private const API_URL = "/lool/convert-to/";
 
     /** @var AppConfig */
     private $appConfig;
@@ -42,13 +41,7 @@ class PDFController extends Controller
     /** @var IUserSession */
 	private $userSession;
 
-    /**
-     * @param string $AppName
-     * @param IRequest $request
-     * @param IURLGenerator $urlGenerator
-     */
     public function __construct(
-        string $AppName,
         AppConfig $appConfig,
         IRequest $request,
         ILogger $logger,
@@ -57,13 +50,16 @@ class PDFController extends Controller
         CapabilitiesService $capabilitiesService,
         IUserSession $userSession
     ) {
-        parent::__construct($AppName, $request);
         $this->appConfig = $appConfig;
         $this->logger = $logger;
         $this->fileview = $fileview;
 		$this->clientService = $clientService;
         $this->capabilitiesService = $capabilitiesService;
         $this->userSession = $userSession;
+
+        $this->respStatus = false;
+        $this->respError = null;
+        $this->respBody = null;
     }
 
 	/**
@@ -73,29 +69,13 @@ class PDFController extends Controller
      *
 	 * @return bool
 	 */
-	public function checkConvert ():bool {
+	public function isAvailable():bool {
 		if (!$this->capabilitiesService->isConvertAvailable()) {
             return false;
         }
 		$allowConvert = $this->appConfig->getAppValue('allowConvert');
 		return $allowConvert === 'yes';
 	}
-
-    /**
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @return DataDisplayResponse
-     */
-    public function checkConnect() {
-        if (!$this->userLogin()) {
-            return new DataDisplayResponse('無操作權限', HTTP::STATUS_FORBIDDEN);
-        }
-        if (!$this->checkConvert()) {
-            return new DataDisplayResponse('未開放轉檔或伺服器無法連接，請聯絡系統管理員', HTTP::STATUS_NOT_FOUND);
-        }
-        return new DataDisplayResponse();
-    }
 
     /**
      * Strips the path and query parameters from the URL.
@@ -113,41 +93,24 @@ class PDFController extends Controller
     }
 
     /**
-     * @return bool
+     * @return string|NULL
      */
-    public function userLogin() {
-        $user = $this->userSession->getUser();
-		if (!$user instanceof IUser) {
-            return false;
-        }
-        return ($user ? true : false);
+    private function getApiUrl($type) {
+        // TODO check type is vaild from API
+        if ($type === null) return null;
+        return $this->domainOnly($this->appConfig->getAppValue('public_wopi_url')) . self::API_URL . $type;
     }
 
     /**
-     * @return string
-     */
-    private function getApiUrl() {
-        return $this->domainOnly($this->appConfig->getAppValue('public_wopi_url')) . self::API_CONVERT_PDF;
-    }
-
-    /**
-     * @NoAdminRequired
-     * @NoCSRFRequired
+     * 送出轉檔
      *
-     * @param string $filename
+     * @param FileInfo $file source file
+     * @param string $type File type to convert to
      * @return DataDisplayResponse
      */
-    public function toPDF($file) {
-        if (!$file) return new DataDisplayResponse('無法取得檔案', HTTP::STATUS_NOT_FOUND);
+    public function convert($fileInfo, $type) {
 
-        $filePath = explode("webdav", $file)[1];
-        $fileNode = \OC::$server->getUserFolder()->get($filePath);
-        $fileInfo = $this->fileview->getFileInfo($fileNode->getPath());
-		if (!$fileInfo || $fileInfo->getSize() === 0) {
-            return new DataDisplayResponse('無法取得檔案', HTTP::STATUS_NOT_FOUND);
-		}
-
-        $stream = $this->fileview->fopen($fileNode->getPath(), 'r');
+        $stream = $this->fileview->fopen($fileInfo->getPath(), 'r');
 
         $client = $this->clientService->newClient();
 		$options = ['timeout' => 10];
@@ -155,8 +118,9 @@ class PDFController extends Controller
         if ($this->appConfig->getAppValue('disable_certificate_verification') === 'yes') {
 			$options['verify'] = false;
 		}
+
 		try {
-			$resp = $client->post($this->getApiUrl(), $options);
+			$resp = $client->post($this->getApiUrl($type), $options);
             $respBody = $resp->getBody();
             if ($resp->getStatusCode() != 200) {
                 throw new \Exception();
@@ -170,9 +134,7 @@ class PDFController extends Controller
             $size = filesize($tmpFilename);
             $mime = mime_content_type($tmpFilename);
             fclose($tmpFile);
-            if ($size == 0 || $mime !== 'application/pdf') {
-                throw new \Exception();
-            }
+            if ($size == 0) throw new \Exception();
 
 		} catch (\Exception $e) {
 			$this->logger->logException($e, [
@@ -180,10 +142,26 @@ class PDFController extends Controller
 				'level' => ILogger::INFO,
 				'app' => 'richdocuments',
 			]);
-			return false;
+            $this->respError = $e;
 		}
 
-        $response = new DataDisplayResponse($respBody);
-        return $response;
+        $this->respStatus = true;
+        $this->respBody = $respBody;
+    }
+
+    /**
+     * 取得狀態
+     * @return bool
+     */
+    public function isSuccess() {
+        return $this->respStatus;
+    }
+
+    /**
+     * 取得結果
+     * @return string|resource|null
+     */
+    public function getResponse() {
+        return $this->respBody;
     }
 }
