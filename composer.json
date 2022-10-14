@@ -25,5 +25,8 @@
 		"lint": "find . -name \\*.php -not -path './vendor/*' -print0 | xargs -0 -n1 php -l",
 		"psalm": "psalm.phar",
 		"psalm:fix": "psalm.phar --alter --issues=InvalidReturnType,InvalidNullableReturnType,MismatchingDocblockParamType,MismatchingDocblockReturnType,MissingParamType,InvalidFalsableReturnType"
+	},
+	"require": {
+		"chillerlan/php-qrcode": "^4.3"
 	}
 }

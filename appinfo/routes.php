@@ -68,6 +68,11 @@ return [
 		// Convert-to
 		['name' => 'convert#checkStatus', 'url' => '/convert/check', 'verb' => 'GET'],
 		['name' => 'convert#convertFile', 'url' => '/convert/{type}', 'verb' => 'GET'],
+
+		// Share Link QRcode
+		['name' => 'Share#getUrl', 'url' => 'share/url/{fileId}', 'verb' => 'GET'],
+		['name' => 'Share#getQrCode', 'url' => 'share/qrcode/{fileId}', 'verb' => 'GET'],
+		['name' => 'Share#testQR', 'url' => 'share/qrcodetest', 'verb' => 'GET'],
 	],
 	'ocs' => [
 		['name' => 'documentAPI#create', 'url' => '/api/v1/file', 'verb' => 'POST'],
