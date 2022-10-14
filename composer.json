@@ -32,6 +32,9 @@
 		"cs:fix": "php-cs-fixer fix",
 		"test:unit": "vendor/bin/phpunit -c tests/phpunit.xml"
 	},
+	"require": {
+		"chillerlan/php-qrcode": "^4.3"
+	},
 	"autoload-dev": {
 		"psr-4": {
 			"OCP\\": "vendor/nextcloud/ocp/OCP"
