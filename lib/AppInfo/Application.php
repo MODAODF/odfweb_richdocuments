@@ -152,14 +152,14 @@ class Application extends App implements IBootstrap {
 				}
 			});
 
-			// $eventDispatcher->addListener('OCA\Files_Sharing::loadAdditionalScripts', function () use ($initialStateService) {
-			// 	$initialStateService->provideCapabilities();
-			// 	\OCP\Util::addScript('richdocuments', 'richdocuments-files');
-			// 	if ($this->checkConvert()) {
-			// 		\OCP\Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
-			// 		\OCP\Util::addScript('richdocuments', 'richdocuments-odfconvert');
-			// 	}
-			// });
+			$eventDispatcher->addListener('OCA\Files_Sharing::loadAdditionalScripts', function () use ($initialStateService) {
+				$initialStateService->provideCapabilities();
+				\OCP\Util::addScript('richdocuments', 'richdocuments-files');
+				if ($this->checkConvert()) {
+					\OCP\Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
+					\OCP\Util::addScript('richdocuments', 'richdocuments-odfconvert');
+				}
+			});
 
 			if (class_exists('\OC\Files\Type\TemplateManager')) {
 				$manager = \OC_Helper::getFileTemplateManager();
