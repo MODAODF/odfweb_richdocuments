@@ -6,6 +6,7 @@ package_name=$(app_name)
 occ=$(CURDIR)/../../occ
 target_dir=$(CURDIR)/build/
 version=6.1.0
+composer=$(shell which composer 2> /dev/null)
 
 clean:
 	rm -rf $(target_dir)
@@ -14,7 +15,15 @@ buildjs:
 	npm ci
 	npm run build
 
-apppackage: clean buildjs
+.PHONY: composer
+composer:
+ifeq (, $(composer))
+	@echo "No composer command available"
+else
+	composer install --prefer-dist --no-dev
+endif
+
+apppackage: clean composer buildjs
 	mkdir -p $(target_dir)
 	rsync -a \
 	--exclude=.git \
@@ -24,8 +33,6 @@ apppackage: clean buildjs
 	--exclude=.travis.yml \
 	--exclude=.scrutinizer.yml \
 	--exclude=CONTRIBUTING.md \
-	--exclude=composer.json \
-	--exclude=composer.lock \
 	--exclude=composer.phar \
 	--exclude=.tx \
 	--exclude=.vscode \
@@ -43,11 +50,11 @@ apppackage: clean buildjs
 	--exclude=postcss.config.js \
 	--exclude=src \
 	--exclude=tsconfig.json \
-	--exclude=vendor \
 	--exclude=webpack.* \
 	--exclude=issue_template.md \
 	--exclude=krankerl.toml \
 	--exclude=mkdocs.yml \
 	$(project_dir) $(target_dir)
-	tar -czf $(target_dir)/$(app_name)-$(version).tar.gz \
+	rsync -ra $(CURDIR)/vendor $(target_dir)/$(app_name)
+	tar -czf $(target_dir)/$(app_name).tar.gz \
 		-C $(target_dir) $(app_name)
