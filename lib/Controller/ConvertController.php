@@ -129,7 +129,10 @@ class ConvertController extends Controller {
         $this->convertApi->convert($fileInfo, 'pdf');
         if ($this->convertApi->isSuccess()) {
             $netContent = $this->convertApi->getResponse();
-            return new DataDisplayResponse($netContent); // 由前端回存新檔案
+            // 由前端回存新檔案
+            $resp = new DataDisplayResponse($netContent);
+            $resp->addHeader('x-file-size', strlen($netContent));
+            return $resp;
         }
         return new DataDisplayResponse('轉存 PDF 失敗', HTTP::STATUS_INTERNAL_SERVER_ERROR);
     }
