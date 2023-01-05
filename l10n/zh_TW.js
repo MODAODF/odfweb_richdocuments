@@ -187,6 +187,7 @@ OC.L10N.register(
     "The [convet-to] of the {productName} is unavailable": "{productName}的轉檔功能未啟用",
     "Save as ODF": "轉存為 ODF",
     "No files to convert": "沒有要轉換的文件",
+    "Failed to convert to ODF": "無法轉為 ODF",
     "The following {num} files will be convert to ODF format:": "下列 {num} 個文件將轉存為 ODF 格式文件：",
     "Failed to convert files ({num})": "轉檔失敗 ({num})",
     "A new folder will be created to store the converted files, please set a new folder name": "將建立新資料夾存放轉檔完成的文件，請設定新資料夾名稱",
@@ -194,7 +195,7 @@ OC.L10N.register(
     "Could not create folder": "無法建立資料夾",
     "New folder name": "新資料夾名稱",
     "The [Save as ODF] is not working or unavailable, please contact the system administrator": "轉檔功能沒有反應或尚未啟用，請聯繫系統管理員。",
-    "Finish ODF ({loaded}/{total})": "完成轉存為 ODF ({loaded}/{total})",
+    "Finish ODF ({loaded}/{total})": "轉存結束 ({loaded}/{total})",
     "Converting...({loaded}/{total})": "轉檔中...({loaded}/{total})"
 },
 "nplurals=1; plural=0;");

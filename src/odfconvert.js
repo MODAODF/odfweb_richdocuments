@@ -79,7 +79,7 @@
 					self._updateProgress(self.progressLoaded)
 					if (!response.ok) {
 						response.text().then((text) => {
-							OC.dialogs.alert(text, t('richdocuments', 'Error'))
+							OC.dialogs.alert(t('richdocuments', text), t('richdocuments', 'Error'))
 						})
 					}
 					self.fileList.reload()
@@ -158,10 +158,10 @@
 							try {
 								const isValidName = OCA.Files.Files.isFileNameValid(value)
 								if (!isValidName) throw t('richdocuments', 'Invalid name')
-
-								await self.fileList.createDirectory(value)
+								const dirname = FileList.getUniqueName(value)
+								await self.fileList.createDirectory(dirname)
 									.then(
-										function() { return value },
+										function() { return dirname },
 										function() { throw t('richdocuments', 'Could not create folder') }
 									).then(startProgress)
 							} catch (error) {
