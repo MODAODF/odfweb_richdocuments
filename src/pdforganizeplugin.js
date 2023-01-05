@@ -5,7 +5,6 @@
 	 * @namespace OCA.FilesPdfEditor.PreviewPlugin
 	 */
 	OCA.FilesPdfEditor.PreviewPlugin = {
-		supportMimetype: ['pdf', 'odt', 'ods', 'odp', 'doc', 'ppt', 'xls', 'docx', 'pptx', 'xlsx'],
 		attach(fileList) {
 			if (fileList.id === 'trashbin') {
 				return
@@ -119,9 +118,16 @@
 				}).then(response => response.blob())
 					.then((blob) => {
 						const newBlob = new Blob([blob], { type: 'application/pdf' })
-						const filename = fileName.split('.')[0]
+						const nameParts = fileName.split('.')
+						const supportExtension = ['pdf', 'odt', 'ods', 'odp', 'doc', 'xls', 'ppt', 'docx', 'xlsx', 'pptx']
+						if (supportExtension.includes(nameParts[nameParts.length - 1])) {
+							nameParts.pop() // remove extension
+						}
+						nameParts.push('pdf')
+						let filename = nameParts.join('.')
+						filename = FileList.getUniqueName(filename)
 						fileList._operationProgressBar.setProgressBarText(t('richdocuments', 'Upload PDF'), null, null)
-						const url = fileList.getUploadUrl() + '/' + filename + '.pdf'
+						const url = fileList.getUploadUrl() + '/' + filename
 						$.ajax({
 							xhr() {
 								const xhr = new window.XMLHttpRequest()

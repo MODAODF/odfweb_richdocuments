@@ -23,6 +23,7 @@ use OCP\AppFramework\Http\DataDisplayResponse;
 use \OCA\Richdocuments\AppConfig;
 use \OCA\Richdocuments\ConvertApi;
 use OCP\Files\Folder;
+use OCP\Files\NotPermittedException;
 
 class ConvertController extends Controller {
 
@@ -152,13 +153,17 @@ class ConvertController extends Controller {
         }
 
         // new filename
-        $name = $fileInfo->getName();
-        $nameArr = explode('.', $name);
-        array_pop($nameArr); // remove ext
+        $newName = $fileInfo->getName();
+        $nameArr = explode('.', $newName);
+        array_pop($nameArr);
+        array_push($nameArr, $type);
         $newName = implode('.', $nameArr);
-        $newName .= '.' . $type;
 
         try {
+            // Ensure unique filename in dir
+            $destinationDir = $this->userFolder->get($destination);
+            $newName = $destinationDir->getNonExistingName($newName);
+
             $this->convertApi->convert($fileInfo, $type);
             if (!$this->convertApi->isSuccess()) {
                 throw new \Exception();
@@ -168,9 +173,19 @@ class ConvertController extends Controller {
             $newContent = $this->convertApi->getResponse();
             $path = $destination . '/' . $newName;
             $this->userFolder->newFile($path, $newContent);
+        } catch (NotPermittedException $e) {
+			$failMsg = 'Could not create file';
         } catch (\Exception $e) {
-            if (!$e->getMessage()) $msg = "轉存 ODF 失敗";
-            return new DataDisplayResponse($msg, HTTP::STATUS_INTERNAL_SERVER_ERROR);
+        }
+
+        if (isset($e)) {
+            $this->logger->logException($e, [
+				'message' => $e->getMessage(),
+				'level' => ILogger::ERROR,
+				'app' => 'richdocuments',
+			]);
+            $failMsg = $failMsg ?? 'Failed to convert to ODF';
+            return new DataDisplayResponse($failMsg, HTTP::STATUS_INTERNAL_SERVER_ERROR);
         }
         return new DataDisplayResponse('檔案已儲存 '.$path);
     }
