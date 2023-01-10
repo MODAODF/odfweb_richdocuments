@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace OCA\Richdocuments\Controller;
 
-use OC\Files\View;
 use OCP\IUser;
 use OCP\IUserSession;
 use OCP\ILogger;
@@ -22,61 +21,55 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use \OCA\Richdocuments\AppConfig;
 use \OCA\Richdocuments\ConvertApi;
-use OCP\Files\Folder;
+use OCP\Files\IRootFolder;
 use OCP\Files\NotPermittedException;
+use \OC\Files\Node\File;
+use \OC\Files\Node\Folder;
+use \OC\Files\FileInfo;
 
 class ConvertController extends Controller {
 
     /** @var AppConfig */
     private $appConfig;
-    /** @var View */
-    private $fileview;
     /** @var ILogger */
 	private $logger;
     /** @var IUserSession */
 	private $userSession;
     /** @var ConvertApi */
 	private $convertApi;
-    /** @var Folder */
-	private $userFolder;
+	/** @var IRootFolder */
+	private $rootFolder;
 
-    /**
-     * @param string $AppName
-     * @param IRequest $request
-     * @param IURLGenerator $urlGenerator
-     */
+    private $fileInfo = null;
+    private $targetFolder = null;
+
     public function __construct(
         string $AppName,
         AppConfig $appConfig,
         IRequest $request,
         ILogger $logger,
-        View $fileview,
         IUserSession $userSession,
         ConvertApi $convertApi,
-        Folder $userFolder
+        IRootFolder $rootFolder
     ) {
         parent::__construct($AppName, $request);
         $this->appConfig = $appConfig;
         $this->logger = $logger;
-        $this->fileview = $fileview;
         $this->userSession = $userSession;
 		$this->convertApi = $convertApi;
-        $this->userFolder = $userFolder;
+        $this->rootFolder = $rootFolder;
     }
 
     /**
      * @NoAdminRequired
      * @NoCSRFRequired
+     * @PublicPage
      *
      * @return DataDisplayResponse
      */
     public function checkStatus() {
-        $user = $this->userSession->getUser();
-		if (!$user || (!$user instanceof IUser)) {
-            return new DataDisplayResponse('無操作權限', HTTP::STATUS_FORBIDDEN);
-        }
         if (!$this->convertApi->isAvailable()) {
-            return new DataDisplayResponse('未開放轉檔或伺服器無法連接，請聯絡系統管理員', HTTP::STATUS_NOT_FOUND);
+            return new DataDisplayResponse('The [convet-to] is not working or unavailable, please contact the system administrator', HTTP::STATUS_NOT_FOUND);
         }
         return new DataDisplayResponse();
     }
@@ -84,29 +77,53 @@ class ConvertController extends Controller {
     /**
      * @NoAdminRequired
      * @NoCSRFRequired
+     * @PublicPage
      *
      * @param string $type
-     * @param string $file
-     * @param string|null $destination
+     * @param string $fileid
+     * @param string $destination
+     * @param string|null $sharingToken
      * @return DataDisplayResponse
      */
-    public function convertFile($type, $file, $destination = null) {
-        $filePath = explode("webdav", $file)[1];
-        $fileInfo = $this->userFolder->get($filePath)->getFileInfo();
-		if (!$fileInfo || $fileInfo->getSize() === 0) {
-            return new DataDisplayResponse('無法取得檔案', HTTP::STATUS_NOT_FOUND);
-		}
+    public function convertFile($type, $fileid, $destination = '/', $sharingToken = null) {
+        $file = null;
+        $targetFolder = null;
+        try {
+            $user = $this->userSession->getUser();
+            if (!is_null($sharingToken)) {
+                $share = \OC::$server->getShareManager()->getShareByToken($sharingToken);
+                $shareNode = $share->getNode();
+                $file = $shareNode?->getById($fileid)[0];
+                $targetFolder = $shareNode->get($destination);
+            } else if ($user instanceof IUser) {
+                $uesrFolder = $this->rootFolder->getUserFolder($user->getUid());
+                $file = $uesrFolder?->getById($fileid)[0];
+                $targetFolder = $uesrFolder->get($destination);
+            }
+            if(!($file instanceof File) || !($targetFolder instanceof Folder)) {
+                throw new \Exception();
+            }
 
-        if ($type === 'pdf') return $this->toPDF($fileInfo);
-        if ($type === 'odf') return $this->toODF($fileInfo, $destination);
-        return new DataDisplayResponse('轉檔類型錯誤', HTTP::STATUS_BAD_REQUEST);
+            $fileInfo = $file->getFileInfo();
+            if (!($fileInfo instanceof FileInfo) || $fileInfo->getSize() === 0) {
+                throw new \Exception();
+            }
+        } catch (\Exception $e) {
+            return new DataDisplayResponse('Unable to get file', HTTP::STATUS_NOT_FOUND);
+        }
+
+        $this->fileInfo = $fileInfo;
+        $this->targetFolder = $targetFolder;
+        if ($type === 'pdf') return $this->toPDF();
+        if ($type === 'odf') return $this->toODF();
+        return new DataDisplayResponse('Error: [convert-to] type is not set or unsupported.', HTTP::STATUS_BAD_REQUEST);
     }
 
     /**
      * 轉存 PDF
      * @return DataDisplayResponse
      */
-    private function toPDF($fileInfo) {
+    private function toPDF() {
         $supportMimes = [
             'application/vnd.oasis.opendocument.text',
             'application/msword',
@@ -123,56 +140,51 @@ class ConvertController extends Controller {
             'application/vnd.openxmlformats-officedocument.presentationml.presentation',
             'application/vnd.ms-powerpoint.presentation.macroEnabled.12'
         ];
-        if (!in_array($fileInfo->getMimetype(), $supportMimes)) {
-            return new DataDisplayResponse('此文件不支援轉為 PDF', HTTP::STATUS_BAD_REQUEST);
+        if (!in_array($this->fileInfo->getMimetype(), $supportMimes)) {
+            return new DataDisplayResponse('Error: conversion of this file is not supported.', HTTP::STATUS_BAD_REQUEST);
         }
 
-        $this->convertApi->convert($fileInfo, 'pdf');
-        if ($this->convertApi->isSuccess()) {
-            $netContent = $this->convertApi->getResponse();
-            // 由前端回存新檔案
-            $resp = new DataDisplayResponse($netContent);
-            $resp->addHeader('x-file-size', strlen($netContent));
-            return $resp;
+        try {
+            $this->convertApi->convert($this->fileInfo, 'pdf');
+            if (!$this->convertApi->isSuccess()) throw new \Exception();
+
+            $newContent = $this->convertApi->getResponse();
+            $uniqueName = $this->_getUniqueName($this->fileInfo->getName(), $this->targetFolder, 'pdf');
+            $this->targetFolder->newFile($uniqueName, $newContent);
+        } catch (NotPermittedException $e) {
+            $failMsg = 'Could not create file';
+        } catch (\Exception $e) {
         }
-        return new DataDisplayResponse('轉存 PDF 失敗', HTTP::STATUS_INTERNAL_SERVER_ERROR);
+
+        if (isset($e)) {
+            $this->logger->logException($e, [
+                'message' => $e->getMessage(),
+                'level' => ILogger::ERROR,
+                'app' => 'richdocuments',
+            ]);
+            $failMsg = $failMsg ?? 'Failed to convert file';
+            return new DataDisplayResponse($failMsg, HTTP::STATUS_INTERNAL_SERVER_ERROR);
+        }
+        return new DataDisplayResponse($uniqueName, Http::STATUS_OK);
     }
 
     /**
      * 轉存 ODF
      * @return DataDisplayResponse
      */
-    private function toODF($fileInfo, $destination) {
-        $type = $this->_getOdfType($fileInfo->getMimetype());
+    private function toODF() {
+        $type = $this->_getOdfType($this->fileInfo->getMimetype());
         if (!$type) {
-            return new DataDisplayResponse('此文件不支援轉為 ODF', HTTP::STATUS_BAD_REQUEST);
+            return new DataDisplayResponse('Error: conversion of this file is not supported.', HTTP::STATUS_BAD_REQUEST);
         }
-
-        if ($destination !== null && !$this->userFolder->nodeExists($destination)) {
-            return new DataDisplayResponse('無法存取目標資料夾', HTTP::STATUS_NOT_FOUND);
-        }
-
-        // new filename
-        $newName = $fileInfo->getName();
-        $nameArr = explode('.', $newName);
-        array_pop($nameArr);
-        array_push($nameArr, $type);
-        $newName = implode('.', $nameArr);
 
         try {
-            // Ensure unique filename in dir
-            $destinationDir = $this->userFolder->get($destination);
-            $newName = $destinationDir->getNonExistingName($newName);
+            $this->convertApi->convert($this->fileInfo, $type);
+            if (!$this->convertApi->isSuccess()) throw new \Exception();
 
-            $this->convertApi->convert($fileInfo, $type);
-            if (!$this->convertApi->isSuccess()) {
-                throw new \Exception();
-            }
-
-            // Create new file
             $newContent = $this->convertApi->getResponse();
-            $path = $destination . '/' . $newName;
-            $this->userFolder->newFile($path, $newContent);
+            $uniqueName = $this->_getUniqueName($this->fileInfo->getName(), $this->targetFolder, $type);
+            $this->targetFolder->newFile($uniqueName, $newContent);
         } catch (NotPermittedException $e) {
 			$failMsg = 'Could not create file';
         } catch (\Exception $e) {
@@ -184,10 +196,10 @@ class ConvertController extends Controller {
 				'level' => ILogger::ERROR,
 				'app' => 'richdocuments',
 			]);
-            $failMsg = $failMsg ?? 'Failed to convert to ODF';
+            $failMsg = $failMsg ?? 'Failed to convert file';
             return new DataDisplayResponse($failMsg, HTTP::STATUS_INTERNAL_SERVER_ERROR);
         }
-        return new DataDisplayResponse('檔案已儲存 '.$path);
+        return new DataDisplayResponse($uniqueName, Http::STATUS_OK);
     }
 
     private function _getOdfType($mime) {
@@ -214,5 +226,20 @@ class ConvertController extends Controller {
         foreach ($supportMimes as $key => $m) {
             if (in_array($mime, $m)) return $key;
         }
+    }
+
+    /**
+     * @param string $filename
+     * @param Folder $folder
+     * @param string $extType
+     * @return string
+     */
+    private function _getUniqueName($filename, $folder, $extType) {
+        $arr = explode('.', $filename);
+        array_pop($arr);
+        array_push($arr, $extType);
+        $name = implode('.', $arr);
+        $name = $folder->getNonExistingName($name);
+        return $name;
     }
 }

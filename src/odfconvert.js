@@ -28,12 +28,9 @@
 			'application/vnd.openxmlformats-officedocument.presentationml.presentation',
 			'application/vnd.ms-powerpoint.presentation.macroEnabled.12',
 		],
-
 		attach(fileList) {
-			if (fileList.id === 'trashbin' || fileList.id === 'files.public') {
-				return
-			}
-			this.fileList = fileList
+			const allowedLists = ['files', 'files.public']
+			if (allowedLists.indexOf(fileList.id) < 0) return
 			this._extendFileActions(fileList)
 		},
 
@@ -54,6 +51,7 @@
 				})
 			}
 
+			if (!fileList?.multiSelectMenuItems) return
 			fileList.multiSelectMenuItems.push({
 				name: 'convertodf',
 				displayName: t('richdocuments', 'Save as ODF'),
@@ -63,17 +61,21 @@
 			fileList.fileMultiSelectMenu = new OCA.Files.FileMultiSelectMenu(fileList.multiSelectMenuItems)
 			fileList.fileMultiSelectMenu.render()
 			fileList.$el.find('.selectedActions').append(fileList.fileMultiSelectMenu.$el)
+			this.fileList = fileList
 		},
 
 		async _singleFile(fileName, context) {
 			const self = OCA.RichDocuments.OdfConvert
+			if (!self._isCreatable()) return
+
 			if (await self._checkApi()) {
 				self.progressTotal = 1
 				self.progressLoaded = 0
 				self.fileList._operationProgressBar.showProgressBar(false)
 				self._updateProgress(0)
-
-				const url = self._getUrl(fileName, context.dir, context.dir)
+				const fileid = (context.$file) ? context.$file.attr('data-id') : context.fileId
+				const destination = (context.$file) ? context.$file.attr('data-path') : context.fileList.getCurrentDirectory()
+				const url = self._getUrl(fileid, destination)
 				fetch(url).then(response => {
 					self.progressLoaded += 1
 					self._updateProgress(self.progressLoaded)
@@ -89,6 +91,8 @@
 
 		_multiFiles(Files) {
 			const self = OCA.RichDocuments.OdfConvert
+			if (!self._isCreatable()) return
+
 			const supportFiles = Files.filter(file =>
 				file.mimetype && self.supportedMimetype.includes(file.mimetype)
 			)
@@ -100,7 +104,7 @@
 				return
 			}
 
-			const formatHTML = function() {
+			const formatConfirmHtml = function() {
 				const ListEl = supportFiles.map(file => `<li>${file.name}</li>`).join('')
 				let string = '<p>' + t('richdocuments', 'The following {num} files will be convert to ODF format:', { num: supportFiles.length }) + '</p>'
 				string += '<ul style="margin-left:40px;list-style:disc;"><small><em>' + ListEl + '</em></small></ul><br>'
@@ -109,15 +113,14 @@
 
 			const startProgress = async function(destinationDir) {
 				const self = OCA.RichDocuments.OdfConvert
-				const destinationPath = self.fileList._currentDirectory + '/' + destinationDir
-
 				self.progressTotal = supportFiles.length
 				self.progressLoaded = 0
 				self.fileList._operationProgressBar.showProgressBar(false)
 				self._updateProgress(0)
 
+				const destination = self.fileList.getCurrentDirectory() + '/' + destinationDir
 				const actions = supportFiles.map(file => {
-					const url = self._getUrl(file.name, file.path, destinationPath)
+					const url = self._getUrl(file.id, destination)
 					return fetch(url)
 						.then(response => {
 							self.progressLoaded += 1
@@ -182,7 +185,7 @@
 			}
 
 			OC.dialogs.confirmHtml(
-				formatHTML(),
+				formatConfirmHtml(),
 				t('core', 'Confirm'),
 				async function(confirm) {
 					if (confirm && await self._checkApi()) askDirname()
@@ -204,7 +207,7 @@
 				}
 			} catch (error) {
 				OC.dialogs.alert(
-					t('richdocuments', 'The [Save as ODF] is not working or unavailable, please contact the system administrator'),
+					t('richdocuments', 'The [convet-to] is not working or unavailable, please contact the system administrator'),
 					t('richdocuments', 'Error')
 				)
 				return false
@@ -221,7 +224,7 @@
 			const bar = this.fileList._operationProgressBar
 			bar.setProgressBarValue((Math.round(loaded / total * 100)))
 			if (loaded === total) {
-				bar.setProgressBarText(t('richdocuments', 'Finish ODF ({loaded}/{total})', { loaded, total }), null, null)
+				bar.setProgressBarText(t('richdocuments', 'Finished file convert'), null, null)
 				setTimeout(function() {
 					bar.hideProgressBar()
 					bar.setProgressBarText('')
@@ -233,20 +236,30 @@
 		},
 
 		/**
-		 * Format url
-		 * @param {string} fileName file name
-		 * @param {string} fileFolder file folder
+		 * Format convert api url
+		 * @param {string} fileid file id
 		 * @param {string} destination The dir path to store new files
 		 * @returns {string}
 		 */
-		_getUrl(fileName, fileFolder, destination = null) {
-			const fileList = OCA.RichDocuments.OdfConvert.fileList
-			const downloadUrl = fileList.getDownloadUrl(fileName, fileFolder)
-			let url = OC.generateUrl('/apps/richdocuments/convert/odf') + '?file=' + downloadUrl
-			if (destination !== null) {
-				url += '&destination=' + destination
+		_getUrl(fileid, destination) {
+			let url = OC.generateUrl('/apps/richdocuments/convert/odf')
+			url += '?fileid=' + fileid
+			url += '&destination=' + destination
+			if (FileList.id === 'files.public') {
+				url += '&sharingToken=' + $('#sharingToken').val()
 			}
 			return url
+		},
+
+		_isCreatable() {
+			const creatable = (FileList.dirInfo.permissions & OC.PERMISSION_CREATE) !== 0 && FileList.$el.find('#free_space').val() !== '0'
+			if (!creatable) {
+				OC.dialogs.alert(
+					t('files', 'You don’t have permission to upload or create files here'),
+					t('richdocuments', 'Error')
+				)
+			}
+			return creatable
 		}
 	}
 })(OCA))

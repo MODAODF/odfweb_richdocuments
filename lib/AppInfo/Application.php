@@ -146,16 +146,20 @@ class Application extends App implements IBootstrap {
 			$eventDispatcher->addListener(LoadViewer::class, function () use ($initialStateService) {
 				$initialStateService->provideCapabilities();
 				\OCP\Util::addScript('richdocuments', 'richdocuments-viewer', 'viewer');
-				if ($this->checkConvert()) {
+
+				$currentUser = \OC::$server->getUserSession()->getUser();
+				if($currentUser !== null && $this->checkConvert()) {
 					\OCP\Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
 					\OCP\Util::addScript('richdocuments', 'richdocuments-odfconvert');
 				}
 			});
 
-			$eventDispatcher->addListener('OCA\Files_Sharing::loadAdditionalScripts', function () use ($initialStateService) {
+			$eventDispatcher->addListener('OCA\Files_Sharing::loadAdditionalScripts', function ($event) use ($initialStateService) {
 				$initialStateService->provideCapabilities();
 				\OCP\Util::addScript('richdocuments', 'richdocuments-files');
-				if ($this->checkConvert()) {
+
+				$share = $event->getArguments()['share'];
+				if ($this->checkConvert() && ($share->getPermissions() & \OCP\Constants::PERMISSION_CREATE) !== 0) {
 					\OCP\Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
 					\OCP\Util::addScript('richdocuments', 'richdocuments-odfconvert');
 				}
