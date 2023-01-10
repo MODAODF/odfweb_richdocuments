@@ -12,12 +12,8 @@
 namespace OCA\Richdocuments;
 
 use OC\Files\View;
-use OCP\IUser;
-use OCP\IUserSession;
 use OCP\ILogger;
 use OCP\IRequest;
-use OCP\AppFramework\Http;
-use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\Http\Client\IClientService;
 use \OCA\Richdocuments\AppConfig;
@@ -38,8 +34,9 @@ class ConvertApi {
 	private $capabilitiesService;
 	/** @var IClientService */
 	private $clientService;
-    /** @var IUserSession */
-	private $userSession;
+
+    private $respStatus = false;
+    private $respBody = null;
 
     public function __construct(
         AppConfig $appConfig,
@@ -47,18 +44,13 @@ class ConvertApi {
         ILogger $logger,
         View $fileview,
         IClientService $clientService,
-        CapabilitiesService $capabilitiesService,
-        IUserSession $userSession
+        CapabilitiesService $capabilitiesService
     ) {
         $this->appConfig = $appConfig;
         $this->logger = $logger;
         $this->fileview = $fileview;
 		$this->clientService = $clientService;
         $this->capabilitiesService = $capabilitiesService;
-        $this->userSession = $userSession;
-
-        $this->respStatus = false;
-        $this->respBody = null;
     }
 
 	/**

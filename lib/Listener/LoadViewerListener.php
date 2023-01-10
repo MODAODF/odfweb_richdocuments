@@ -59,7 +59,9 @@ class LoadViewerListener implements IEventListener {
 		if ($this->permissionManager->isEnabledForUser() && $this->userId !== null) {
 			$this->initialStateService->provideCapabilities();
 			Util::addScript('richdocuments', 'richdocuments-viewer', 'viewer');
-			if ($this->checkConvert()) {
+
+			$currentUser = \OC::$server->getUserSession()->getUser();
+			if ($currentUser !== null && $this->checkConvert()) {
 				Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
 				Util::addScript('richdocuments', 'richdocuments-odfconvert');
 			}

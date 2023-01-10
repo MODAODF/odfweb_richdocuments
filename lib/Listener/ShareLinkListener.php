@@ -63,7 +63,8 @@ class ShareLinkListener implements \OCP\EventDispatcher\IEventListener {
 			$this->initialStateService->provideCapabilities();
 			Util::addScript('richdocuments', 'richdocuments-files');
 			Util::addScript('richdocuments', 'richdocuments-viewer', 'viewer');
-			if ($this->checkConvert()) {
+			$currentUser = \OC::$server->getUserSession()->getUser();
+			if ($currentUser !== null && $this->checkConvert()) {
 				Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
 				Util::addScript('richdocuments', 'richdocuments-odfconvert');
 			}
