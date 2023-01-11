@@ -93,11 +93,13 @@ class ConvertController extends Controller {
             if (!is_null($sharingToken)) {
                 $share = \OC::$server->getShareManager()->getShareByToken($sharingToken);
                 $shareNode = $share->getNode();
-                $file = $shareNode?->getById($fileid)[0];
+                $file = $shareNode->getById($fileid);
+                $file = count($file) > 0 ? $file[0] : null;
                 $targetFolder = $shareNode->get($destination);
             } else if ($user instanceof IUser) {
                 $uesrFolder = $this->rootFolder->getUserFolder($user->getUid());
-                $file = $uesrFolder?->getById($fileid)[0];
+                $file = $uesrFolder->getById($fileid);
+                $file = count($file) > 0 ? $file[0] : null;
                 $targetFolder = $uesrFolder->get($destination);
             }
             if(!($file instanceof File) || !($targetFolder instanceof Folder)) {
