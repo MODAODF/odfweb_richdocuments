@@ -134,7 +134,8 @@ class SettingsController extends Controller{
 	                            $external_apps,
 								$canonical_webroot,
 								$saveToOdf,
-								$allowConvert) {
+								$allowConvert,
+								$allowLocalAddress) {
 		$message = $this->l10n->t('Saved');
 
 		if ($wopi_url !== null){
@@ -180,6 +181,11 @@ class SettingsController extends Controller{
 		// odfweb
 		if ($allowConvert !== null) {
 			$this->appConfig->setAppValue('allowConvert', $allowConvert);
+		}
+
+		// odfweb
+		if ($allowLocalAddress !== null) {
+			$this->appConfig->setAppValue('allowLocalAddress', $allowLocalAddress);
 		}
 
 		$this->discoveryManager->refetch();

@@ -186,6 +186,8 @@ OC.L10N.register(
     "Converting...({loaded}/{total})": "轉檔中...({loaded}/{total})",
     "Unable to get file": "無法取得檔案",
     "Error: [convert-to] type is not set or unsupported.": "錯誤：轉檔類型未指定或不支援",
-    "Error: conversion of this file is not supported.": "錯誤：不支援轉換此文件"
+    "Error: conversion of this file is not supported.": "錯誤：不支援轉換此文件",
+    "Allow local address": "允許本地連接",
+    "After enabling, Nextcloud server will allow connections from local address": "允許本地連接後，Nextcloud 伺服器將允許從本地主機發出的連接"
 },
 "nplurals=1; plural=0;");

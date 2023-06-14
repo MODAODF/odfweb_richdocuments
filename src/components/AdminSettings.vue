@@ -256,6 +256,16 @@
 					<label for="allowConvert">{{ t('richdocuments', 'Enable convert files') }}</label>
 					<em>{{ t('richdocuments', 'After enabling, the file conversion options will display in action menu of file list') }}</em>
 				</div>
+				<div>
+					<input id="allowLocalAddress"
+						class="checkbox"
+						v-model="settings.allowLocalAddress"
+						type="checkbox"
+						:disabled="updating"
+						@change="updateAllowLocalAddress">
+					<label for="allowLocalAddress">{{ t('richdocuments', 'Allow local address') }}</label>
+					<em>{{ t('richdocuments', 'After enabling, Nextcloud server will allow connections from local address') }}</em>
+				</div>
 			</div>
 			<div v-else>
 				<span class="icon icon-error" />
@@ -470,6 +480,7 @@ export default {
 			settings: {
 				saveToOdf: true,
 				allowConvert: false,
+				allowLocalAddress: false,
 				demoUrl: null,
 				wopi_url: null,
 				watermark: {
@@ -538,6 +549,9 @@ export default {
 		this.isConvertAvailable = this.initial.isConvertAvailable
 		if (this.initial.settings.allowConvert) {
 			Vue.set(this.settings, 'allowConvert', this.initial.settings.allowConvert)
+		}
+		if (this.initial.settings.allowLocalAddress) {
+			Vue.set(this.settings, 'allowLocalAddress', this.initial.settings.allowLocalAddress)
 		}
 
 		Vue.set(this.settings, 'data', this.initial.settings)
@@ -646,6 +660,11 @@ export default {
 		async updateAllowConvertto() {
 			await this.updateSettings({
 				allowConvert: this.settings.allowConvert ? 'yes' : 'no'
+			})
+		},
+		async updateAllowLocalAddress() {
+			await this.updateSettings({
+				allowLocalAddress: this.settings.allowLocalAddress ? 'yes' : 'no'
 			})
 		},
 		async updateServer() {

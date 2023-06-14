@@ -86,6 +86,7 @@ class Admin implements ISettings {
 					'saveToOdf'          => $this->config->getAppValue('richdocuments', 'saveToOdf'),
 					'isConvertAvailable' => $this->capabilitiesService->isConvertAvailable(),
 					'allowConvert'       => $this->config->getAppValue('richdocuments', 'allowConvert'),
+					// 'allowLocalAddress'  => $this->config->getAppValue('richdocuments', 'allowLocalAddress'),
 					'disable_certificate_verification' => $this->config->getAppValue('richdocuments', 'disable_certificate_verification', '') === 'yes',
 					'templates'          => $this->manager->getSystemFormatted(),
 					'templatesAvailable' => $this->capabilitiesService->hasTemplateSaveAs() || $this->capabilitiesService->hasTemplateSource(),

@@ -105,6 +105,9 @@ class ConvertApi {
         $client = $this->clientService->newClient();
 		$options = ['timeout' => 10];
         $options['multipart'] = [['name' => $fileInfo->getName(), 'contents' => $stream]];
+        if ($this->appConfig->getAppValue('allowLocalAddress') === 'yes') {
+            $options['nextcloud'] = ['allow_local_address' => true];
+        }
         if ($this->appConfig->getAppValue('disable_certificate_verification') === 'yes') {
 			$options['verify'] = false;
 		}
