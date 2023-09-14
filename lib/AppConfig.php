@@ -38,9 +38,10 @@ class AppConfig {
 	public const WATERMARK_APP_NAMESPACE = 'files';
 
 	public const APP_SETTING_TYPES = [
-		'watermark_allGroupsList' => 'array',
-		'watermark_allTagsList' => 'array',
-		'watermark_linkTagsList' => 'array'
+			'watermark_allGroupsList' => 'array',
+			'watermark_allTagsList' => 'array',
+			'watermark_linkTagsList' => 'array',
+			'preview_file_allowed_hosts' => 'array',
 	];
 
 	/** @var IConfig */
