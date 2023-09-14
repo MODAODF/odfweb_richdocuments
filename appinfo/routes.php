@@ -34,6 +34,9 @@ return [
 
 		['name' => 'document#createFromTemplate', 'url' => 'indexTemplate', 'verb' => 'GET'],
 		['name' => 'document#publicPage', 'url' => '/public', 'verb' => 'GET'],
+		['name' => 'document#previewFile', 'url' => '/preview_file', 'verb' => 'GET'],
+		['name' => 'document#checkFileInfo', 'url' => 'preview/wopi/files/{fileId}', 'verb' => 'GET'],
+		['name' => 'document#getFile', 'url' => 'preview/wopi/files/{fileId}/contents', 'verb' => 'GET'],
 
 		// external api access
 		['name' => 'document#extAppGetData', 'url' => '/ajax/extapp/data/{fileId}', 'verb' => 'POST'],

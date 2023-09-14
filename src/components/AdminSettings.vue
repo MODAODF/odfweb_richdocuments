@@ -273,6 +273,36 @@
 			</div>
 		</div>
 
+		<div v-if="isSetup" id="preview-file" class="section">
+			<h2>{{ t('richdocuments', 'Preview file API') }}</h2>
+			<input id="toggle-preview-file"
+				v-model="settings.previewFile.enabled"
+				class="checkbox"
+				type="checkbox"
+				:disabled="updating"
+				@change="updatePreviewFile">
+			<label for="toggle-preview-file">{{ t('richdocuments', 'Enable preview file API. others can use the preview file API to preview files.') }}</label>
+
+			<div v-if="settings.previewFile.enabled">
+				<h3>{{ t('richdocuments', 'Set hostname whitelist:') }}</h3>
+				<ul>
+					<li v-for="item in settings.previewFile.allowedHosts" :key="item">
+						<input type="text" readonly :value="item">
+						<span>
+							<Button class="icon-delete inline-button"
+								:title="t('richdocuments', 'delete')"
+								@click="removeAllowedHostname(item)">
+							</Button>
+						</span>
+					</li>
+				</ul>
+				<form @submit.prevent="addAllowedHostname">
+					<input type="text" :disabled="updating" v-model="tmpHostname">
+					<input type="submit" :value="t('richdocuments', 'Add a new hostname')" :disabled="updating">
+				</form>
+			</div>
+		</div>
+
 		<div v-if="isSetup" id="advanced-settings" class="section">
 			<h2>{{ t('richdocuments', 'Advanced settings') }}</h2>
 			<SettingsCheckbox :value="isOoxml"
@@ -470,6 +500,7 @@ export default {
 			groups: [],
 			tags: [],
 			isConvertAvailable: false,
+			tmpHostname: '',
 			uiVisible: {
 				canonical_webroot: false,
 				external_apps: false,
@@ -497,6 +528,10 @@ export default {
 					allTags: false,
 					allTagsList: [],
 					text: '',
+				},
+				previewFile: {
+					enabled: false,
+					allowedHosts: [],
 				},
 			},
 		}
@@ -543,6 +578,12 @@ export default {
 		if (this.initial.settings.saveToOdf) {
 			// 初始化 saveToOdf 參數
 			Vue.set(this.settings, 'saveToOdf', this.initial.settings.saveToOdf)
+		}
+
+		// 初始化 previewFile 參數
+		if (this.initial.preview_file) {
+			Vue.set(this.settings, 'previewFile', this.initial.preview_file)
+			this.settings.previewFile.enabled = this.settings.previewFile.enabled === 'yes'
 		}
 
 		// 初始化 convert-to 參數
@@ -657,6 +698,11 @@ export default {
 				saveToOdf: this.settings.saveToOdf ? 'yes' : 'no'
 			})
 		},
+		async updatePreviewFile() {
+			return await this.updateSettings({
+				previewFile: this.settings.previewFile
+			})
+		},
 		async updateAllowConvertto() {
 			await this.updateSettings({
 				allowConvert: this.settings.allowConvert ? 'yes' : 'no'
@@ -683,6 +729,29 @@ export default {
 				}
 			}
 			this.checkIfDemoServerIsActive()
+		},
+		async addAllowedHostname() {
+			if (this.settings.previewFile.allowedHosts.includes(this.tmpHostname)) {
+				alert(t('richdocuments', 'This hostname is already in the list of allowed hosts.'))
+				return false
+			}
+			if (!/^[a-z0-9\u4e00-\u9fa5.-]+$/.test(this.tmpHostname)) {
+				alert(t('richdocuments', 'This hostname contains invalid characters.'))
+				return false
+			}
+			this.settings.previewFile.allowedHosts.push(this.tmpHostname)
+			const response = await this.updatePreviewFile()
+			if (response.data.status === 'success') {
+				this.tmpHostname = ''
+			} else {
+				this.settings.previewFile.allowedHosts.splice(this.tmpHostname, 1)
+				alert(t('richdocuments', 'This hostname contains invalid characters.'))
+				return false
+			}
+		},
+		removeAllowedHostname(item) {
+			this.settings.previewFile.allowedHosts.splice(this.settings.previewFile.allowedHosts.indexOf(item), 1)
+			this.updatePreviewFile()
 		},
 		async updateSettings(data) {
 			this.updating = true

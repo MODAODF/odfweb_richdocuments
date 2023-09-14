@@ -134,6 +134,7 @@ class SettingsController extends Controller{
 	                            $external_apps,
 								$canonical_webroot,
 								$saveToOdf,
+								$previewFile,
 								$allowConvert,
 								$allowLocalAddress) {
 		$message = $this->l10n->t('Saved');
@@ -186,6 +187,33 @@ class SettingsController extends Controller{
 		// odfweb
 		if ($allowLocalAddress !== null) {
 			$this->appConfig->setAppValue('allowLocalAddress', $allowLocalAddress);
+		}
+
+		if ($previewFile !== null) {
+			$this->appConfig->setAppValue('preview_file_enabled', $previewFile['enabled'] ? 'yes' : 'no');
+			if ($previewFile['enabled'] && $previewFile['allowedHosts']) {
+				foreach ($previewFile['allowedHosts'] as $allowedHost) {
+					if (!preg_match('/^[a-z0-9\x{4e00}-\x{9fa5}.-]+$/u', $allowedHost)) {
+						return new JSONResponse([
+							'status' => 'error',
+							'data' => [
+								'message' => 'Invalid hostname.'
+							]
+						], Http::STATUS_UNPROCESSABLE_ENTITY);
+					}
+				}
+				/* if ($previewFile['maxSizeInMB'] <= 0 || $previewFile['maxSizeInMB'] > 10) {
+					return new JSONResponse([
+						'status' => 'error',
+						'data' => [
+							'message' => 'Invalid max file size.'
+						]
+					], Http::STATUS_UNPROCESSABLE_ENTITY);
+				} */
+			}
+			$this->appConfig->setAppValue('preview_file_allowed_hosts', implode(',', array_unique($previewFile['allowedHosts'])) ?: '');
+			// $this->appConfig->setAppValue('preview_file_max_size_in_MB', $previewFile['maxSizeInMB']);
+			// $this->appConfig->setAppValue('preview_file_allowed_formats', implode(',', array_unique($previewFile['allowedFormats'])) ?: '');
 		}
 
 		$this->discoveryManager->refetch();

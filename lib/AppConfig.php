@@ -35,7 +35,9 @@ class AppConfig {
 	const APP_SETTING_TYPES = [
 			'watermark_allGroupsList' => 'array',
 			'watermark_allTagsList' => 'array',
-			'watermark_linkTagsList' => 'array'
+			'watermark_linkTagsList' => 'array',
+			'preview_file_allowed_hosts' => 'array',
+			// 'preview_file_allowed_formats' => 'array'
 		];
 
 	/** @var IConfig */

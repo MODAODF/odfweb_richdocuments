@@ -91,6 +91,10 @@ class Admin implements ISettings {
 					'templates'          => $this->manager->getSystemFormatted(),
 					'templatesAvailable' => $this->capabilitiesService->hasTemplateSaveAs() || $this->capabilitiesService->hasTemplateSource(),
 					'settings' => $this->appConfig->getAppSettings(),
+					'preview_file' => [
+						'enabled' => $this->config->getAppValue('richdocuments', 'preview_file_enabled'),
+						'allowedHosts' => $this->appConfig->getAppValueArray('preview_file_allowed_hosts'),
+					],
 					'demo_servers' => $this->demoService->fetchDemoServers(),
 					'web_server' => strtolower($_SERVER['SERVER_SOFTWARE']),
 					'os_family' => PHP_VERSION_ID >= 70200 ? PHP_OS_FAMILY : PHP_OS,

@@ -31,7 +31,10 @@ use \OCP\IL10N;
 use \OCP\ILogger;
 use \OCP\AppFramework\Http\ContentSecurityPolicy;
 use \OCP\AppFramework\Http\FeaturePolicy;
+use \OCP\AppFramework\Http\JSONResponse;
 use \OCP\AppFramework\Http\TemplateResponse;
+use \OCP\AppFramework\Http\StreamResponse;
+use \OCP\AppFramework\Http\StandaloneTemplateResponse;
 use \OCA\Richdocuments\AppConfig;
 use OCP\ISession;
 use OCP\Share\Exceptions\ShareNotFound;
@@ -487,6 +490,135 @@ class DocumentController extends Controller {
 		}
 
 		return new TemplateResponse('core', '403', [], 'guest');
+	}
+
+		// 設定預覽檔案存放的目錄
+	private $tmpDirectory = '/tmp' . '/';
+
+	/**
+  * @NoAdminRequired
+  * @NoCSRFRequired
+  * @PublicPage
+  */
+	public function previewFile($url) {
+		$redirectResponse = new RedirectResponse($url);
+
+		// Check if the API is enabled by the admins.
+		if ($this->appConfig->getAppValue('preview_file_enabled') === 'no' || !$this->appConfig->getAppValue('preview_file_enabled')) {
+			return $redirectResponse;
+		}
+
+		// Check if the hostname is trusted.
+		$isTrustedUrl = false;
+
+		if (strpos($url, '://') !== false) {
+			$parts = explode('://', $url);
+			if (count($parts) > 1) {
+				$afterColonSlash = $parts[1];
+			} else {
+				$afterColonSlash = $url;
+			}
+
+		}
+    $allowedHosts = $this->appConfig->getAppValueArray('preview_file_allowed_hosts') ?: [];
+		foreach ($allowedHosts as $allowedHost) {
+			if (strpos($afterColonSlash, $allowedHost) === 0) {
+				$isTrustedUrl = true;
+				break;
+			}
+		}
+		if (!$isTrustedUrl) {
+			return $redirectResponse;
+		}
+
+		// Get file extension.
+    $pathInfo = pathinfo($url);
+    $extension = isset($pathInfo['extension']) ? '.' . $pathInfo['extension'] : '';
+    /* $allowedFormats = $this->appConfig->getAppValueArray('preview_file_allowed_formats');
+    if (!in_array($extension, $allowedFormats)) {
+      return $redirectResponse;
+    } */
+
+		// Check if the file size is allowed.
+		/* $result = get_headers($url, true);
+		$fileSize = end($result['Content-Length']);
+		$maxFileSizeLimit = $this->appConfig->getAppValue('preview_file_max_size_in_MB') ?: 10;
+		$maxFileSizeLimit *= 1024 * 1024;
+		if ($fileSize > $maxFileSizeLimit) {
+			return $redirectResponse;
+		} */
+
+		// Save the file
+    $file = file_get_contents($url);
+		if ($file === false) {
+			return $redirectResponse;
+		}
+		$fileName = uniqid() . $extension;
+		$filePath = $this->tmpDirectory . $fileName;
+		file_put_contents($filePath, $file);
+
+		// Set fileId to fileName.
+		$protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https://" : "http://";
+		$host = $_SERVER['HTTP_HOST'];
+		$root = \OC::$WEBROOT;
+		$checkFileInfoUrl = $protocol . $host . $root . '/index.php/apps/richdocuments/preview/wopi/files/' . $fileName;
+		$officeOnlineUrl = $this->appConfig->getAppValue('wopi_url') . '/loleaflet/dist/loleaflet.html';
+		$actionUrl = $officeOnlineUrl . '?WOPISrc=' . urlencode($checkFileInfoUrl) . '&closebutton=1&lang=zh-TW';
+		$accessToken = $fileName;
+		$parameters = [
+			'actionUrl' => $actionUrl,
+			'accessToken' => $accessToken,
+			'wopiUrl' => $this->appConfig->getAppValue('wopi_url'),
+		];
+		$template = new StandaloneTemplateResponse('richdocuments', 'previewFile', $parameters, '');
+		return $template;
+	}
+
+
+	/**
+  * @NoAdminRequired
+  * @NoCSRFRequired
+  * @PublicPage
+  */
+	public function checkFileInfo($fileId, $access_token) {
+		$fileName = $fileId;
+		$filePath = $this->tmpDirectory . $fileName;
+		$protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https://" : "http://";
+		$host = $_SERVER['HTTP_HOST'];
+
+		$fileSize = filesize($filePath);
+
+		$guestUserId = 'Guest-' . \OC::$server->getSecureRandom()->generate(8);
+		$response = [
+			'BaseFileName' => $fileName,
+			'Size' => $fileSize,
+			'UserCanWrite' => false,
+			'DisablePrint' => true,
+			'DisableCopy' => true,
+			'DisableExport' => false,
+			'UserCanRename' => false,
+			'UserId' => $guestUserId,
+			'OwnerId' => $guestUserId,
+			'PostMessageOrigin' => $protocol . $host
+		];
+
+		return new JSONResponse($response);
+	}
+
+	/**
+  * @NoAdminRequired
+  * @NoCSRFRequired
+  * @PublicPage
+  */
+	public function getFile($fileId, $access_token) {
+		$fileName = $fileId;
+		$filePath = $this->tmpDirectory . $fileName;
+		$response = new StreamResponse(fopen($filePath, 'rb'));
+
+		if (file_exists($filePath)) {
+			unlink($filePath);
+		}
+		return $response;
 	}
 
 	private function renderErrorPage($message) {
