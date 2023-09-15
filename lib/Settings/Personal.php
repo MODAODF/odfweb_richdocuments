@@ -23,6 +23,7 @@
 
 namespace OCA\Richdocuments\Settings;
 
+use OCA\Richdocuments\AppConfig;
 use OCA\Richdocuments\Service\CapabilitiesService;
 use OCA\Richdocuments\Service\InitialStateService;
 use OCP\AppFramework\Http\TemplateResponse;
@@ -34,6 +35,9 @@ class Personal implements ISettings {
 	/** @var IConfig Config */
 	private $config;
 
+	/** @var AppConfig */
+	private $appConfig;
+
 	/** @var CapabilitiesService */
 	private $capabilitiesService;
 
@@ -43,8 +47,9 @@ class Personal implements ISettings {
 	/** @var string */
 	private $userId;
 
-	public function __construct(IConfig $config, CapabilitiesService $capabilitiesService, InitialStateService $initialStateService, $userId) {
+	public function __construct(IConfig $config, CapabilitiesService $capabilitiesService, InitialStateService $initialStateService, $userId, AppConfig $appConfig) {
 		$this->config = $config;
+		$this->appConfig = $appConfig;
 		$this->capabilitiesService = $capabilitiesService;
 		$this->initialState = $initialStateService;
 		$this->userId = $userId;
@@ -58,11 +63,22 @@ class Personal implements ISettings {
 		}
 
 		$this->initialState->provideCapabilities();
+		$previewFileApi = '';
+		$previewFileAllowedHosts = [];
+		if ($this->config->getAppValue('richdocuments', 'preview_file_enabled') === 'yes') {
+			$protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https://" : "http://";
+			$host = $_SERVER['HTTP_HOST'];
+			$root = \OC::$WEBROOT;
+			$previewFileApi = $protocol . $host . $root . '/index.php/apps/richdocuments/preview_file?url=';
+			$previewFileAllowedHosts = $this->appConfig->getAppValueArray('preview_file_allowed_hosts');
+		}
 		return new TemplateResponse(
 			'richdocuments',
 			'personal',
 			[
-				'templateFolder' => $this->config->getUserValue($this->userId, 'richdocuments', 'templateFolder', '')
+				'templateFolder' => $this->config->getUserValue($this->userId, 'richdocuments', 'templateFolder', ''),
+				'previewFileAllowedHosts' => $previewFileAllowedHosts,
+				'previewFileApi' => $previewFileApi,
 			],
 			'blank'
 		);
