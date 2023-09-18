@@ -24,6 +24,7 @@ use OCP\Files\IRootFolder;
 use OCP\Files\Node;
 use OCP\Files\NotFoundException;
 use OCP\Files\NotPermittedException;
+use OCP\IURLGenerator;
 use \OCP\IRequest;
 use \OCP\IConfig;
 use \OCP\ILogger;
@@ -61,6 +62,8 @@ class DocumentController extends Controller {
 	private $federationService;
 	/** @var InitialStateService */
 	private $initialState;
+	/** @var IURLGenerator */
+	private $urlGenerator;
 
 	public function __construct(
 		$appName,
@@ -75,7 +78,8 @@ class DocumentController extends Controller {
 		ILogger $logger,
 		TemplateManager $templateManager,
 		FederationService $federationService,
-		InitialStateService $initialState
+		InitialStateService $initialState,
+		IURLGenerator $urlGenerator
 	) {
 		parent::__construct($appName, $request);
 		$this->uid = $UserId;
@@ -89,6 +93,7 @@ class DocumentController extends Controller {
 		$this->templateManager = $templateManager;
 		$this->federationService = $federationService;
 		$this->initialState = $initialState;
+		$this->urlGenerator = $urlGenerator;
 	}
 
 	/**
@@ -454,10 +459,8 @@ class DocumentController extends Controller {
 		file_put_contents($filePath, $file);
 
 		// Set fileId to fileName.
-		$protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https://" : "http://";
-		$host = $_SERVER['HTTP_HOST'];
-		$root = \OC::$WEBROOT;
-		$checkFileInfoUrl = $protocol . $host . $root . '/index.php/apps/richdocuments/preview/wopi/files/' . $fileName;
+		$baseUrl = $this->urlGenerator->getBaseUrl();
+		$checkFileInfoUrl = $baseUrl . '/index.php/apps/richdocuments/preview/wopi/files/' . $fileName;
 		$officeOnlineUrl = $this->appConfig->getAppValue('wopi_url') . '/loleaflet/dist/loleaflet.html';
 		$actionUrl = $officeOnlineUrl . '?WOPISrc=' . urlencode($checkFileInfoUrl) . '&closebutton=1&lang=zh-TW';
 		$accessToken = $fileName;
@@ -479,9 +482,7 @@ class DocumentController extends Controller {
 	public function checkFileInfo($fileId, $access_token) {
 		$fileName = $fileId;
 		$filePath = $this->tmpDirectory . $fileName;
-		$protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https://" : "http://";
-		$host = $_SERVER['HTTP_HOST'];
-
+		$baseUrl = $this->urlGenerator->getBaseUrl();
 		$fileSize = filesize($filePath);
 
 		$guestUserId = 'Guest-' . \OC::$server->getSecureRandom()->generate(8);
@@ -495,7 +496,7 @@ class DocumentController extends Controller {
 			'UserCanRename' => false,
 			'UserId' => $guestUserId,
 			'OwnerId' => $guestUserId,
-			'PostMessageOrigin' => $protocol . $host
+			'PostMessageOrigin' => $baseUrl
 		];
 
 		return new JSONResponse($response);
