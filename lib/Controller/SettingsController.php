@@ -193,7 +193,7 @@ class SettingsController extends Controller{
 			$this->appConfig->setAppValue('preview_file_enabled', $previewFile['enabled'] ? 'yes' : 'no');
 			if ($previewFile['enabled'] && $previewFile['allowedHosts']) {
 				foreach ($previewFile['allowedHosts'] as $allowedHost) {
-					if (!preg_match('/^[a-z0-9\x{4e00}-\x{9fa5}.-]+$/u', $allowedHost)) {
+					if (!preg_match('/^[a-z0-9\x{4e00}-\x{9fa5}.-\/]+$/u', $allowedHost)) {
 						return new JSONResponse([
 							'status' => 'error',
 							'data' => [
