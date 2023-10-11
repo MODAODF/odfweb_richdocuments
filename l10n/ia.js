@@ -1,7 +1,6 @@
 OC.L10N.register(
     "richdocuments",
     {
-    "Collabora Online" : "Collabora Online",
     "New Document.odt" : "Nove-Documento.odt",
     "New Spreadsheet.ods" : "Nove-Folio-de-Labor.ods",
     "New Presentation.odp" : "Nove-Presentation.odp",
@@ -10,10 +9,14 @@ OC.L10N.register(
     "New Presentation.pptx" : "Nove-Presentation.pptx",
     "Saved" : "Salveguardate",
     "Saved with error: Collabora Online should use the same protocol as the server installation." : "Salveguardate con error: Collabora Online deberea usar le mesme protocollo que le servitor de installation.",
+    "The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form" : "Le file incargate excede le directiva MAX_FILE_SIZE que esseva specificate in le formulario HTML",
+    "No file was uploaded" : "Nulle file esseva incargate",
+    "Missing a temporary folder" : "Il manca un dossier temporari",
     "File is too big" : "File es troppo grande",
     "Advanced settings" : "Configurationes avantiate",
     "Description" : "Description",
     "Cancel" : "Cancellar",
+    "Close" : "Clauder",
     "Error" : "Error",
     "Nickname" : "Pseudonymo",
     "Save" : "Salveguardar",
@@ -25,6 +28,7 @@ OC.L10N.register(
     "Guest" : "Invitato",
     "Failed to revert the document to older version" : "Il falleva a restaurar le documento a un version plus ancian",
     "Could not create file" : "Impossibile crear le file",
-    "Create" : "Crear"
+    "Create" : "Crear",
+    "Collabora Online" : "Collabora Online"
 },
 "nplurals=2; plural=(n != 1);");
