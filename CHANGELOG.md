@@ -1,5 +1,43 @@
 # Changelog
 
+## 6.3.0
+
+### Added
+
+- Add config option to turn on Collabora feature lock for read only users [#2510](https://github.com/nextcloud/richdocuments/pull/2510)
+
+### Fixed
+
+- Only apply hideDownload if share attribute is actually false [#2529](https://github.com/nextcloud/richdocuments/pull/2529)
+- Disable sharing for public links and versions if app is disabled [#2508](https://github.com/nextcloud/richdocuments/pull/2508)
+- Use proper product name in capabilities [#2532](https://github.com/nextcloud/richdocuments/pull/2532)
+
+### Other
+
+- Use correct server version for integration tests @juliushaertl [#2512](https://github.com/nextcloud/richdocuments/pull/2512)
+- Fix `public_wopi_url` variable configuration name [#2505](https://github.com/nextcloud/richdocuments/pull/2505)
+- Pin postgres version @Raudius [#2533](https://github.com/nextcloud/richdocuments/pull/2533)
+- For PDFs rename context menu option to "Open with" @Raudius [#2536](https://github.com/nextcloud/richdocuments/pull/2536)
+
+## 6.2.1
+
+### Added
+
+- Emit event for each user on document open [#2495](https://github.com/nextcloud/richdocuments/pull/2495)
+
+### Fixed
+
+- Updates "productName" in capabilities @Raudius [#2401](https://github.com/nextcloud/richdocuments/pull/2401)
+- fix safari does not focus to document frame on startup [#2377](https://github.com/nextcloud/richdocuments/pull/2377)
+- Fix: hide download option inside Collabora for "hide download" shares [#2391](https://github.com/nextcloud/richdocuments/pull/2391)
+- Hide "Save as" option when downloading is not allowed by s… @Raudius [#2402](https://github.com/nextcloud/richdocuments/pull/2402)
+- Only register templates if enabled for user [#2414](https://github.com/nextcloud/richdocuments/pull/2414)
+
+### Other
+
+- Fix loading file without logged-in when watermark is enable for groups [#2482](https://github.com/nextcloud/richdocuments/pull/2482)
+- Migrate to nextcloud/OCP package in stable24 @nickvergessen [#2479](https://github.com/nextcloud/richdocuments/pull/2479)
+
 ## 6.2.0
 
 ### Added

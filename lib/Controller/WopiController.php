@@ -26,7 +26,9 @@ use OCA\Richdocuments\AppConfig;
 use OCA\Richdocuments\AppInfo\Application;
 use OCA\Richdocuments\Db\Wopi;
 use OCA\Richdocuments\Db\WopiMapper;
+use OCA\Richdocuments\Events\DocumentOpenedEvent;
 use OCA\Richdocuments\Helper;
+use OCA\Richdocuments\PermissionManager;
 use OCA\Richdocuments\Service\FederationService;
 use OCA\Richdocuments\Service\UserScopeService;
 use OCA\Richdocuments\TemplateManager;
@@ -39,6 +41,7 @@ use OCP\AppFramework\Http\StreamResponse;
 use OCP\AppFramework\QueryException;
 use OCP\Constants;
 use OCP\Encryption\IManager as IEncryptionManager;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\GenericFileException;
@@ -76,6 +79,8 @@ class WopiController extends Controller {
 	private $appConfig;
 	/** @var TokenManager */
 	private $tokenManager;
+	/** @var PermissionManager */
+	private $permissionManager;
 	/** @var IUserManager */
 	private $userManager;
 	/** @var WopiMapper */
@@ -95,30 +100,13 @@ class WopiController extends Controller {
 	/** @var IGroupManager */
 	private $groupManager;
 	private ILockManager $lockManager;
+	private IEventDispatcher $eventDispatcher;
 
 	// Signifies LOOL that document has been changed externally in this storage
 	const LOOL_STATUS_DOC_CHANGED = 1010;
 
 	const WOPI_AVATAR_SIZE = 32;
 
-	/**
-	 * @param string $appName
-	 * @param IRequest $request
-	 * @param IRootFolder $rootFolder
-	 * @param IURLGenerator $urlGenerator
-	 * @param IConfig $config
-	 * @param AppConfig $appConfig
-	 * @param TokenManager $tokenManager
-	 * @param IUserManager $userManager
-	 * @param WopiMapper $wopiMapper
-	 * @param ILogger $logger
-	 * @param TemplateManager $templateManager
-	 * @param IShareManager $shareManager
-	 * @param UserScopeService $userScopeService
-	 * @param FederationService $federationService
-	 * @param IEncryptionManager $encryptionManager
-	 * @param IGroupManager $groupManager
-	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
@@ -127,6 +115,7 @@ class WopiController extends Controller {
 		IConfig $config,
 		AppConfig $appConfig,
 		TokenManager $tokenManager,
+		PermissionManager $permissionManager,
 		IUserManager $userManager,
 		WopiMapper $wopiMapper,
 		ILogger $logger,
@@ -136,7 +125,8 @@ class WopiController extends Controller {
 		FederationService $federationService,
 		IEncryptionManager $encryptionManager,
 		IGroupManager $groupManager,
-		ILockManager $lockManager
+		ILockManager $lockManager,
+		IEventDispatcher $eventDispatcher
 	) {
 		parent::__construct($appName, $request);
 		$this->rootFolder = $rootFolder;
@@ -144,6 +134,7 @@ class WopiController extends Controller {
 		$this->config = $config;
 		$this->appConfig = $appConfig;
 		$this->tokenManager = $tokenManager;
+		$this->permissionManager = $permissionManager;
 		$this->userManager = $userManager;
 		$this->wopiMapper = $wopiMapper;
 		$this->logger = $logger;
@@ -154,6 +145,7 @@ class WopiController extends Controller {
 		$this->encryptionManager = $encryptionManager;
 		$this->groupManager = $groupManager;
 		$this->lockManager = $lockManager;
+		$this->eventDispatcher = $eventDispatcher;
 	}
 
 	/**
@@ -209,13 +201,13 @@ class WopiController extends Controller {
 			'UserFriendlyName' => $userDisplayName,
 			'UserExtraInfo' => [],
 			'UserCanWrite' => (bool)$wopi->getCanwrite(),
-			'UserCanNotWriteRelative' => $this->encryptionManager->isEnabled() || $isPublic,
+			'UserCanNotWriteRelative' => $this->encryptionManager->isEnabled() || $isPublic || $wopi->getHideDownload(),
 			'PostMessageOrigin' => $wopi->getServerHost(),
 			'LastModifiedTime' => Helper::toISO8601($file->getMTime()),
 			'SupportsRename' => !$isVersion,
 			'UserCanRename' => !$isPublic && !$isVersion,
 			'EnableInsertRemoteImage' => !$isPublic,
-			'EnableShare' => $file->isShareable() && !$isVersion,
+			'EnableShare' => $file->isShareable() && !$isVersion && !$isPublic,
 			'HideUserList' => '',
 			'DisablePrint' => $wopi->getHideDownload(),
 			'DisableExport' => $wopi->getHideDownload(),
@@ -224,6 +216,7 @@ class WopiController extends Controller {
 			'HidePrintOption' => $wopi->getHideDownload(),
 			'DownloadAsPostMessage' => $wopi->getDirect(),
 			'SupportsLocks' => $this->lockManager->isLockProviderAvailable(),
+			'IsUserLocked' => $this->permissionManager->userIsFeatureLocked($wopi->getEditorUid()),
 		];
 
 		// Odfweb 新增功能
@@ -277,6 +270,11 @@ class WopiController extends Controller {
 		if ($wopi->isRemoteToken()) {
 			$response = $this->setFederationFileInfo($wopi, $response);
 		}
+
+		$this->eventDispatcher->dispatchTyped(new DocumentOpenedEvent(
+			$user ? $user->getUID() : null,
+			$file
+		));
 
 		return new JSONResponse($response);
 	}
@@ -387,7 +385,7 @@ class WopiController extends Controller {
 				return true;
 			}
 		}
-		if ($this->config->getAppValue(AppConfig::WATERMARK_APP_NAMESPACE, 'watermark_allGroups', 'no') === 'yes') {
+		if ($userId !== null && $this->config->getAppValue(AppConfig::WATERMARK_APP_NAMESPACE, 'watermark_allGroups', 'no') === 'yes') {
 			$groups = $this->appConfig->getAppValueArray('watermark_allGroupsList');
 			foreach ($groups as $group) {
 				if ($userId && \OC::$server->getGroupManager()->isInGroup($userId, $group)) {
