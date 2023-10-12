@@ -24,13 +24,14 @@ OC.L10N.register(
     "An error occurred" : "Tekkis tõrge",
     "Nickname" : "Hüüdnimi",
     "Save" : "Salvesta",
-    "Saving…" : "Salvestamine...",
+    "Try again" : "Proovi uuesti",
     "Remove from favorites" : "Eemalda lemmikutest",
     "Add to favorites" : "Lisa lemmikutesse",
     "Details" : "Üksikasjad",
     "Download" : "Lae alla",
     "Guest" : "Külaline",
     "Could not create file" : "Ei suuda luua faili",
-    "Create" : "Loo"
+    "Create" : "Loo",
+    "Saving…" : "Salvestamine..."
 },
 "nplurals=2; plural=(n != 1);");

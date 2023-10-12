@@ -10,11 +10,14 @@
     "The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form" : "Augšupielādētā datne pārsniedz MAX_FILE_SIZE norādi, kas ir norādīta HTML formā",
     "No file was uploaded" : "Neviena datne netika augšupielādēta",
     "Missing a temporary folder" : "Trūkst pagaidu mapes",
+    "Failed to upload the file" : "Neizdevās augšupielādēt failu",
     "File is too big" : "Datne ir par lielu",
     "Invalid file provided" : "Norādīta nederīga datne",
     "Empty" : "Tukšs",
+    "Setting up a new server" : "Jauna servera iestatīšana",
     "Advanced settings" : "Paplašināti iestatījumi",
     "Select groups" : "Izvēlieties grupas",
+    "Failed to save settings" : "Neizdevās saglabāt iestatījumus",
     "Description" : "Apraksts",
     "No results" : "Nav rezultātu",
     "Cancel" : "Atcelt",
@@ -23,7 +26,8 @@
     "An error occurred" : "Gadījās kļūda",
     "Nickname" : "Iesauka",
     "Save" : "Saglabāt",
-    "Saving…" : "Saglabā...",
+    "Try again" : "Mēģiniet vēlreiz",
+    "Saving …" : "Saglabā ...",
     "Remove from favorites" : "Noņemt no izlases",
     "Add to favorites" : "Pievienot izlasei",
     "Details" : "Detaļas",
@@ -32,6 +36,7 @@
     "Failed to revert the document to older version" : "Neizdevās atjaunot dokumentu ar vecāku versiju",
     "Could not create file" : "Neizdevās izveidot datni",
     "Create" : "Izveidot",
+    "Saving…" : "Saglabā...",
     "Collabora Online" : "Collabora Online"
 },"pluralForm" :"nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n != 0 ? 1 : 2);"
 }

@@ -45,7 +45,8 @@ OC.L10N.register(
     "Save As" : "Lagre som",
     "New filename" : "Nytt filnavn",
     "Save" : "Lagre",
-    "Saving…" : "Lagrer…",
+    "Try again" : "Prøv igjen",
+    "Saving …" : "Lagrer ...",
     "Remove from favorites" : "Fjern fra favoritter",
     "Add to favorites" : "Legg til i favoritter",
     "Details" : "Detaljer",
@@ -57,6 +58,7 @@ OC.L10N.register(
     "Create" : "Ny",
     "Select template" : "Velg mal",
     "Saved with error: Collabora Online should use the same protocol as the server installation." : "Lagret med feil: Collabora Online bør bruke samme protokoll som serverinstallasjonen.",
+    "Saving…" : "Lagrer…",
     "Collabora Online" : "Collabora Online",
     "Document already exists" : "Dokumentet finnes allerede"
 },

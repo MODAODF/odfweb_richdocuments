@@ -20,6 +20,7 @@
     "Invalid file provided" : "Der er angivet en ugyldig fil",
     "Office" : "Kontor",
     "Empty" : "Tom",
+    "Click here for more info" : "Klik her for mere info",
     "Advanced settings" : "Avancerede indstillinger",
     "Restrict usage to specific groups" : "Brugen begrænset til bestemte grupper",
     "Select groups" : "Vælg grupper",
@@ -33,10 +34,12 @@
     "Error" : "Fejl",
     "An error occurred" : "Der var en fejl",
     "Nickname" : "Kaldenavn",
+    "Set" : "Sæt",
     "Save As" : "Gem som",
     "New filename" : "Nyt filnavn",
     "Save" : "Gem",
-    "Saving…" : "Gemmer...",
+    "Try again" : "Prøv igen",
+    "Saving …" : "Gemmer ...",
     "Remove from favorites" : "Fjernet fra favoritter",
     "Add to favorites" : "Føj til favoritter",
     "Details" : "Detaljer",
@@ -48,6 +51,7 @@
     "Create" : "Opret",
     "Select template" : "Vælg model",
     "Saved with error: Collabora Online should use the same protocol as the server installation." : "Gemt med fejl: Collabora Online skal bruge samme protokol som server installationen.",
+    "Saving…" : "Gemmer...",
     "Collabora Online" : "Collabora Online"
 },"pluralForm" :"nplurals=2; plural=(n != 1);"
 }

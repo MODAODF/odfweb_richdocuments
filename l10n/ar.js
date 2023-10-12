@@ -29,15 +29,18 @@ OC.L10N.register(
     "Nickname" : "كنية.\nلقب.",
     "Set" : "تعيين",
     "Save" : "حفظ",
-    "Saving…" : "جارٍ الحفظ …",
+    "Try again" : "عاود المحاولة",
+    "Saving …" : "جاري الحفظ…",
     "Remove from favorites" : "إزالتها مِن المفضلة",
     "Add to favorites" : "أضفه إلى المفضلة",
     "Details" : "التفاصيل",
     "Download" : "تنزيل",
     "Guest" : "ضيف",
+    "Current version (unsaved changes)" : "النسخة الحالية ( لم يتم حفظ التعديلات)",
     "Create a new document" : "أنشئ مستندا جديدا",
     "Could not create file" : "لا يستطيع انشاء ملف ",
     "Create" : "إنشاء",
-    "Select template" : "حدد قالب"
+    "Select template" : "حدد قالب",
+    "Saving…" : "جارٍ الحفظ …"
 },
 "nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;");
