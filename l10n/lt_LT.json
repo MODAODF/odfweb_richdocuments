@@ -40,6 +40,7 @@
     "I will setup my own server" : "Aš nusistatysiu asmeninį serverį",
     "Advanced settings" : "Išplėstiniai nustatymai",
     "Select groups" : "Pasirinkti grupes",
+    "Available fonts" : "Prieinami šriftai",
     "Secure view settings" : "Saugaus rodinio nustatymai",
     "Secure view enables you to secure documents by embedding a watermark" : "Saugusis rodinys leidžia jums apsaugoti dokumentus įterpiant vandenženklį",
     "Enable watermarking" : "Įjungti vandenženklių darymą",
@@ -63,7 +64,6 @@
     "Save As" : "Įrašyti kaip",
     "New filename" : "Naujas failo pavadinimas",
     "Save" : "Įrašyti",
-    "Edit with {productName}" : "Taisyti naudojant {productName}",
     "Failed to connect to {productName}. Please try again later or contact your server administrator." : "Nepavyko prisijungti prie {productName}. Vėliau bandykite dar kartą arba susisiekite su savo serverio administratoriumi.",
     "Select a personal template folder" : "Pasirinkti asmeninių šablonų aplanką",
     "Saving…" : "Įrašoma…",
@@ -83,14 +83,15 @@
     "Could not create file" : "Nepavyko sukurti failo",
     "Create" : "Sukurti",
     "Select template" : "Pasirinkite šabloną",
+    "Edit with {productName}" : "Taisyti naudojant {productName}",
     "Global templates" : "Visuotiniai šablonai",
     "Add a new template" : "Pridėti naują šabloną",
     "No templates defined." : "Neapibrėžtas joks šablonas.",
     "Add a new one?" : "Pridėti naują?",
     "template preview" : "šablono peržiūra",
     "Select a template directory" : "Pasirinkite šablonų katalogą",
-    "Collabora Online" : "Collabora Online",
     "Saved with error: Collabora Online should use the same protocol as the server installation." : "Įrašyta su klaida: Collabora Online turėtų naudoti tokį patį protokolą kaip ir serverio diegimas.",
+    "Collabora Online" : "Collabora Online",
     "Document already exists" : "Dokumentas jau yra"
 },"pluralForm" :"nplurals=4; plural=(n % 10 == 1 && (n % 100 > 19 || n % 100 < 11) ? 0 : (n % 10 >= 2 && n % 10 <=9) && (n % 100 > 19 || n % 100 < 11) ? 1 : n % 1 != 0 ? 2: 3);"
 }

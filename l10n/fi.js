@@ -74,7 +74,6 @@ OC.L10N.register(
     "Save As" : "Tallenna nimellä",
     "New filename" : "Uusi tiedostonimi",
     "Save" : "Tallenna",
-    "Edit with {productName}" : "Muokkaa käyttäen {productName}",
     "Select a personal template folder" : "Valitse henkilökohtainen mallipohjakansio",
     "Saving…" : "Tallennetaan...",
     "Remove from favorites" : "Poista suosikeista",
@@ -92,6 +91,7 @@ OC.L10N.register(
     "Could not create file" : "Tiedoston luominen epäonnistui",
     "Create" : "Luo",
     "Select template" : "Valitse mallipohja",
+    "Edit with {productName}" : "Muokkaa käyttäen {productName}",
     "Global templates" : "Yhteiset mallipohjat",
     "Add a new template" : "Lisää uusi mallipohja",
     "No templates defined." : "Mallipohjia ei ole määritelty.",
@@ -99,8 +99,8 @@ OC.L10N.register(
     "template preview" : "mallipohjan esikatselu",
     "Select a template directory" : "Valitse mallipohjakansio",
     "Remove personal template folder" : "Poista henkilökohtainen mallipohjakansio",
-    "Collabora Online" : "Collabora Online",
     "Saved with error: Collabora Online should use the same protocol as the server installation." : "Tallennettu virheen kanssa: Collabora Onlinen tulee käyttää palvelimen kanssa samaa protokollaa.",
+    "Collabora Online" : "Collabora Online",
     "Document already exists" : "Asiakirja on jo olemassa"
 },
 "nplurals=2; plural=(n != 1);");

@@ -28,6 +28,7 @@ use OCA\Files_Sharing\Event\ShareLinkAccessedEvent;
 use OCA\Richdocuments\AppConfig;
 use OCA\Richdocuments\Capabilities;
 use OCA\Richdocuments\ConvertApi;
+use OCA\Richdocuments\Listener\BeforeFetchPreviewListener;
 use OCA\Richdocuments\Listener\CSPListener;
 use OCA\Richdocuments\Listener\LoadViewerListener;
 use OCA\Richdocuments\Listener\ShareLinkListener;
@@ -53,6 +54,7 @@ use OCP\Files\Template\TemplateFileCreator;
 use OCP\IConfig;
 use OCP\IL10N;
 use OCP\IPreview;
+use OCP\Preview\BeforePreviewFetchedEvent;
 use OCP\Security\CSP\AddContentSecurityPolicyEvent;
 
 class Application extends App implements IBootstrap {
@@ -72,6 +74,7 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(AddContentSecurityPolicyEvent::class, CSPListener::class);
 		$context->registerEventListener(LoadViewer::class, LoadViewerListener::class);
 		$context->registerEventListener(ShareLinkAccessedEvent::class, ShareLinkListener::class);
+		$context->registerEventListener(BeforePreviewFetchedEvent::class, BeforeFetchPreviewListener::class);
 	}
 
 	public function boot(IBootContext $context): void {

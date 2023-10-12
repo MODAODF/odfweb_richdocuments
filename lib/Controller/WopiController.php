@@ -65,6 +65,7 @@ use OCP\Lock\LockedException;
 use OCP\PreConditionNotMetException;
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IManager as IShareManager;
+use OCP\Share\IShare;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
@@ -238,7 +239,8 @@ class WopiController extends Controller {
 			$response['TemplateSaveAs'] = $file->getName();
 		}
 
-		if ($this->shouldWatermark($isPublic, $wopi->getEditorUid(), $fileId, $wopi)) {
+		$share = $this->getShareForWopiToken($wopi);
+		if ($this->permissionManager->shouldWatermark($file, $wopi->getEditorUid(), $share)) {
 			$email = $user !== null && !$isPublic ? $user->getEMailAddress() : "";
 			$replacements = [
 				'userId' => $wopi->getEditorUid(),
@@ -270,6 +272,8 @@ class WopiController extends Controller {
 		if ($wopi->isRemoteToken()) {
 			$response = $this->setFederationFileInfo($wopi, $response);
 		}
+
+		$response = array_merge($response, $this->appConfig->getWopiOverride());
 
 		$this->eventDispatcher->dispatchTyped(new DocumentOpenedEvent(
 			$user ? $user->getUID() : null,
@@ -323,7 +327,7 @@ class WopiController extends Controller {
 	/**
 	 * Odfweb 新增功能
 	 */
-    private function shouldSaveToOdf($mimetype) {
+  private function shouldSaveToOdf($mimetype) {
 		$saveToOdf = $this->config->getAppValue('richdocuments', 'saveToOdf', 'yes');
 		if ($saveToOdf === 'yes') {
 			$msMimes = [
@@ -348,62 +352,6 @@ class WopiController extends Controller {
 			}
 		}
 		return null;
-	}
-
-	private function shouldWatermark($isPublic, $userId, $fileId, Wopi $wopi) {
-		if ($this->config->getAppValue(AppConfig::WATERMARK_APP_NAMESPACE, 'watermark_enabled', 'no') === 'no') {
-			return false;
-		}
-
-		if ($isPublic) {
-			if ($this->config->getAppValue(AppConfig::WATERMARK_APP_NAMESPACE, 'watermark_linkAll', 'no') === 'yes') {
-				return true;
-			}
-			if ($this->config->getAppValue(AppConfig::WATERMARK_APP_NAMESPACE, 'watermark_linkRead', 'no') === 'yes' && !$wopi->getCanwrite()) {
-				return true;
-			}
-			if ($this->config->getAppValue(AppConfig::WATERMARK_APP_NAMESPACE, 'watermark_linkSecure', 'no') === 'yes' && $wopi->getHideDownload()) {
-				return true;
-			}
-			if ($this->config->getAppValue(AppConfig::WATERMARK_APP_NAMESPACE, 'watermark_linkTags', 'no') === 'yes') {
-				$tags = $this->appConfig->getAppValueArray('watermark_linkTagsList');
-				$fileTags = \OC::$server->getSystemTagObjectMapper()->getTagIdsForObjects([$fileId], 'files')[$fileId];
-				foreach ($fileTags as $tagId) {
-					if (in_array($tagId, $tags, true)) {
-						return true;
-					}
-				}
-			}
-		} else {
-			if ($this->config->getAppValue(AppConfig::WATERMARK_APP_NAMESPACE, 'watermark_shareAll', 'no') === 'yes') {
-				$files = $this->rootFolder->getUserFolder($userId)->getById($fileId);
-				if (count($files) !== 0 && $files[0]->getOwner()->getUID() !== $userId) {
-					return true;
-				}
-			}
-			if ($this->config->getAppValue(AppConfig::WATERMARK_APP_NAMESPACE, 'watermark_shareRead', 'no') === 'yes' && !$wopi->getCanwrite()) {
-				return true;
-			}
-		}
-		if ($userId !== null && $this->config->getAppValue(AppConfig::WATERMARK_APP_NAMESPACE, 'watermark_allGroups', 'no') === 'yes') {
-			$groups = $this->appConfig->getAppValueArray('watermark_allGroupsList');
-			foreach ($groups as $group) {
-				if ($userId && \OC::$server->getGroupManager()->isInGroup($userId, $group)) {
-					return true;
-				}
-			}
-		}
-		if ($this->config->getAppValue(AppConfig::WATERMARK_APP_NAMESPACE, 'watermark_allTags', 'no') === 'yes') {
-			$tags = $this->appConfig->getAppValueArray('watermark_allTagsList');
-			$fileTags = \OC::$server->getSystemTagObjectMapper()->getTagIdsForObjects([$fileId], 'files')[$fileId];
-			foreach ($fileTags as $tagId) {
-				if (in_array($tagId, $tags, true)) {
-					return true;
-				}
-			}
-		}
-
-		return false;
 	}
 
 	/**
@@ -582,6 +530,9 @@ class WopiController extends Controller {
 				$this->wopiMapper->update($wopi);
 			}
 			return new JSONResponse(['LastModifiedTime' => Helper::toISO8601($file->getMTime())]);
+		} catch (NotFoundException $e) {
+			$this->logger->logException($e, ['level' => ILogger::INFO,	'app' => 'richdocuments', 'message' => 'File not found']);
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
 		} catch (\Exception $e) {
 			$this->logger->logException($e, ['level' => ILogger::ERROR,	'app' => 'richdocuments', 'message' => 'getFile failed']);
 			return new JSONResponse([], Http::STATUS_INTERNAL_SERVER_ERROR);
@@ -851,6 +802,7 @@ class WopiController extends Controller {
 	 * @throws ShareNotFound
 	 */
 	private function getFileForWopiToken(Wopi $wopi) {
+		$this->userScopeService->setUserScope($wopi->getEditorUid());
 		if (!empty($wopi->getShare())) {
 			$share = $this->shareManager->getShareByToken($wopi->getShare());
 			$node = $share->getNode();
@@ -882,6 +834,15 @@ class WopiController extends Controller {
 		});
 
 		return array_shift($files);
+	}
+
+	private function getShareForWopiToken(Wopi $wopi): ?IShare {
+		try {
+			return $wopi->getShare() ? $this->shareManager->getShareByToken($wopi->getShare()) : null;
+		} catch (ShareNotFound $e) {
+		}
+
+		return null;
 	}
 
 	/**

@@ -27,6 +27,7 @@ const getUIDefaults = () => {
 	const statusBar = 'false'
 	const textRuler = 'false'
 	const sidebar = 'false'
+	const saveAsMode = 'group'
 	const uiMode = defaults.UIMode ?? 'classic' // or notebookbar
 
 	let uiDefaults = 'TextRuler=' + textRuler + ';'
@@ -34,6 +35,7 @@ const getUIDefaults = () => {
 	uiDefaults += 'PresentationSidebar=' + sidebar + ';PresentationStatusbar=' + statusBar + ';'
 	uiDefaults += 'SpreadsheetSidebar=' + sidebar + ';SpreadsheetStatusbar=' + statusBar + ';'
 	uiDefaults += 'UIMode=' + uiMode + ';'
+	uiDefaults += 'SaveAsMode=' + saveAsMode + ';'
 	return uiDefaults
 }
 
@@ -60,13 +62,18 @@ const generateCSSVarTokens = () => {
 		'--color-border-dark': '--co-border-dark',
 		'--border-radius-pill': '--co-border-radius-pill',
 	}
+
+	const accessibilityCss = document.querySelector("link[href*='accessibility/css/user']")
+	accessibilityCss && accessibilityCss.remove()
+
 	let str = ''
+	const element = document.getElementById('documents-content') ?? document.documentElement
 	try {
 		for (const cssVarKey in cssVarMap) {
-			let cStyle = window.parent.getComputedStyle(document.documentElement).getPropertyValue(cssVarKey)
+			let cStyle = window.getComputedStyle(element).getPropertyValue(cssVarKey)
 			if (!cStyle) {
 				// try suffix -dark instead
-				cStyle = window.parent.getComputedStyle(document.documentElement).getPropertyValue(cssVarKey + '-dark')
+				cStyle = window.getComputedStyle(element).getPropertyValue(cssVarKey + '-dark')
 			}
 			if (!cStyle) continue // skip if it is not set
 			const varNames = cssVarMap[cssVarKey].split(':')
