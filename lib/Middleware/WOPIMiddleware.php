@@ -74,7 +74,7 @@ class WOPIMiddleware extends Middleware {
 			$accessToken = $this->request->getParam('access_token');
 			[$fileId, ,] = Helper::parseFileId($fileId);
 			$wopi = $this->wopiMapper->getWopiForToken($accessToken);
-			if ((int)$fileId !== $wopi->getFileid()) {
+			if ((int)$fileId !== $wopi->getFileid() && (int)$fileId !== $wopi->getTemplateId()) {
 				throw new NotPermittedException();
 			}
 		} catch (\Exception $e) {
@@ -96,7 +96,7 @@ class WOPIMiddleware extends Middleware {
 		if($allowedRanges === '') {
 			return true;
 		}
-		$allowedRanges = explode(',', $allowedRanges);
+		$allowedRanges = preg_split('/(\s|,|;|\|)+/', $allowedRanges);
 
 		$userIp = $this->request->getRemoteAddress();
 		foreach($allowedRanges as $range) {
@@ -105,6 +105,7 @@ class WOPIMiddleware extends Middleware {
 			}
 		}
 
+		$this->logger->info('WOPI request denied from ' . $userIp . ' as it does not match the configured ranges: ' . implode(', ', $allowedRanges));
 		return false;
 	}
 
@@ -116,7 +117,7 @@ class WOPIMiddleware extends Middleware {
 	private function matchCidr(string $ip, string $range): bool {
 		list($subnet, $bits) = array_pad(explode('/', $range), 2, null);
 		if ($bits === null) {
-			$bits = 32;
+			$bits = strpos($subnet, ':') !== false ? 128 : 32;
 		}
 		$bits = (int)$bits;
 

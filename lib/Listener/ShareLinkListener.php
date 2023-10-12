@@ -63,6 +63,7 @@ class ShareLinkListener implements \OCP\EventDispatcher\IEventListener {
 		if ($this->permissionManager->isEnabledForUser($owner)) {
 			$this->initialStateService->provideCapabilities();
 			Util::addScript('richdocuments', 'richdocuments-files');
+			Util::addScript('richdocuments', 'richdocuments-viewer', 'viewer');
 		}
 
 		if ($this->application->checkConvert() && ($share->getPermissions() & \OCP\Constants::PERMISSION_CREATE !== 0)) {

@@ -86,42 +86,47 @@ class Capabilities implements ICapability {
 	private $permissionManager;
 	/** @var IAppManager */
 	private $appManager;
+	private ?string $userId = null;
 
 	private $capabilities = null;
 
-	public function __construct(IL10N $l10n, AppConfig $config, CapabilitiesService $capabilitiesService, PermissionManager $permissionManager, IAppManager $appManager) {
+	public function __construct(IL10N $l10n, AppConfig $config, CapabilitiesService $capabilitiesService, PermissionManager $permissionManager, IAppManager $appManager, ?string $userId) {
 		$this->l10n = $l10n;
 		$this->config = $config;
 		$this->capabilitiesService = $capabilitiesService;
 		$this->permissionManager = $permissionManager;
 		$this->appManager = $appManager;
+		$this->userId = $userId;
 	}
 
 	public function getCapabilities() {
-		if (!$this->permissionManager->isEnabledForUser()) {
+		// Only expose capabilities for users with enabled office or guests (where it depends on the share owner if they have access)
+		if (!$this->permissionManager->isEnabledForUser() && $this->userId !== null) {
 			return [];
 		}
 
 		if (!$this->capabilities) {
 			$collaboraCapabilities = $this->capabilitiesService->getCapabilities();
 			$filteredMimetypes = self::MIMETYPES;
+			$optionalMimetypes = self::MIMETYPES_OPTIONAL;
 			// If version is too old, draw is not supported
 			if (!$this->capabilitiesService->hasDrawSupport()) {
-				$filteredMimetypes = array_values(array_diff($filteredMimetypes, [
+				$filteredMimetypes = array_diff($filteredMimetypes, [
 					'application/vnd.oasis.opendocument.graphics',
 					'application/vnd.oasis.opendocument.graphics-flat-xml',
-				]));
+				]);
 			}
 
 			if (!$this->appManager->isEnabledForUser('files_pdfviewer')) {
 				$filteredMimetypes[] = 'application/pdf';
+				$optionalMimetypes = array_diff($optionalMimetypes, ['application/pdf']);
 			}
 
 			$this->capabilities = [
 				'richdocuments' => [
 					'version' => \OC::$server->getAppManager()->getAppVersion('richdocuments'),
-					'mimetypes' => $filteredMimetypes,
-					'mimetypesNoDefaultOpen' => self::MIMETYPES_OPTIONAL,
+					'mimetypes' => array_values($filteredMimetypes),
+					'mimetypesNoDefaultOpen' => array_values($optionalMimetypes),
 					'collabora' => $collaboraCapabilities,
 					'direct_editing' => isset($collaboraCapabilities['hasMobileSupport']) ?: false,
 					'templates' => isset($collaboraCapabilities['hasTemplateSaveAs']) || isset($collaboraCapabilities['hasTemplateSource']) ?: false,
