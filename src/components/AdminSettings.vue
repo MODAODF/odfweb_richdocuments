@@ -31,6 +31,19 @@
 				{{ t('richdocuments', 'Collabora Online is a powerful LibreOffice-based online office suite with collaborative editing, which supports all major documents, spreadsheet and presentation file formats and works together with all modern browsers.') }}
 			</p>
 
+			<!-- FIXME: Update this to NcNoteCard for NC25+ once we update the Nextcloud Vue-component library -->
+			<div v-if="settings.wopi_url && settings.wopi_url !== '' && !settings.wopi_allowlist" id="security-warning-state-warning">
+				<span class="icon icon-error-white" />
+				<span class="message">
+					{{ t('richdocuments', 'You have not configured the allow-list for WOPI requests. Without this setting users may download restricted files via WOPI requests to the Nextcloud server.') }}
+					<a title="WOPI settings documentation"
+						href="https://docs.nextcloud.com/server/latest/admin_manual/office/configuration.html#wopi-settings"
+						target="_blank"
+						rel="noopener"
+						class="external">{{ t('richdocuments', 'Click here for more info') }}</a>
+				</span>
+			</div>
+
 			<div v-if="settings.wopi_url && settings.wopi_url !== ''">
 				<div v-if="serverError == 2 && isNginx && serverMode === 'builtin'" id="security-warning-state-failure">
 					<span class="icon icon-close-white" /><span class="message">{{ t('richdocuments', 'Could not establish connection to the Collabora Online server. This might be due to a missing configuration of your web server. For more information, please visit: ') }}<a title="Connecting Collabora Online Single Click with Nginx"
@@ -374,6 +387,13 @@
 		<div v-if="isSetup" id="secure-view-settings" class="section">
 			<h2>{{ t('richdocuments', 'Secure view settings') }}</h2>
 			<p>{{ t('richdocuments', 'Secure view enables you to secure documents by embedding a watermark') }}</p>
+			<ul>
+				<li>{{ t('richdocuments', 'The settings only apply to compatible office files that are opened in Nextcloud Office') }}</li>
+				<li>{{ t('richdocuments', 'The following options within Nextcloud Office will be disabled: Copy, Download, Export, Print') }}</li>
+				<li>{{ t('richdocuments', 'Files may still be downloadable through Nextcloud unless restricted otherwise through sharing or access control settings') }}</li>
+				<li>{{ t('richdocuments', 'Files may still be downloadable via WOPI requests if WOPI settings are not correctly configured') }}</li>
+				<li>{{ t('richdocuments', 'Previews will be blocked for watermarked files to not leak the first page of documents') }}</li>
+			</ul>
 			<SettingsCheckbox v-model="settings.watermark.enabled"
 				:label="t('richdocuments', 'Enable watermarking')"
 				hint=""
@@ -408,6 +428,12 @@
 				<SettingsCheckbox v-if="!settings.watermark.shareAll"
 					v-model="settings.watermark.shareRead"
 					:label="t('richdocuments', 'Show watermark for read only shares')"
+					hint=""
+					:disabled="updating"
+					@input="update" />
+				<SettingsCheckbox v-if="!settings.watermark.shareAll"
+					v-model="settings.watermark.shareDisabledDownload"
+					:label="t('richdocuments', 'Show watermark for shares without download permission')"
 					hint=""
 					:disabled="updating"
 					@input="update" />
@@ -886,18 +912,18 @@ export default {
 		margin-left: 25px;
 		&:not(.multiselect) {
 			margin-top: 10px;
-			font-style: italic;
 		}
 
-		ul {
-			margin-bottom: 15px;
-		}
+	}
 
-		li {
-			list-style: disc;
-			padding: 3px;
-			margin-left: 20px;
-		}
+	ul {
+		margin-bottom: 15px;
+	}
+
+	li {
+		list-style: disc;
+		padding: 3px;
+		margin-left: 20px;
 	}
 
 	.modal__content {

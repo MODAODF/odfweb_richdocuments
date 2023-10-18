@@ -45,9 +45,10 @@ abstract class Office extends Provider {
 	private $logger;
 
 	public function __construct(IClientService $clientService, IConfig $config, Capabilities $capabilities, ILogger $logger) {
+		parent::__construct();
 		$this->clientService = $clientService;
 		$this->config = $config;
-		$this->capabilitites = $capabilities->getCapabilities()['richdocuments'];
+		$this->capabilitites = $capabilities->getCapabilities()['richdocuments'] ?? [];
 		$this->logger = $logger;
 	}
 
@@ -80,7 +81,7 @@ abstract class Office extends Provider {
 		}
 
 		$client = $this->clientService->newClient();
-		$options = ['timeout' => 10];
+		$options = ['timeout' => 25];
 
 		if ($this->config->getAppValue('richdocuments', 'disable_certificate_verification') === 'yes') {
 			$options['verify'] = false;

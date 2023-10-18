@@ -2,8 +2,9 @@ import { emit } from '@nextcloud/event-bus'
 import { getRootUrl } from '@nextcloud/router'
 import { getRequestToken } from '@nextcloud/auth'
 import Config from './services/config.tsx'
-import { setGuestName, shouldAskForGuestName } from './helpers/guestName'
-import { getUIDefaults, generateCSSVarTokens, getCollaboraTheme } from './helpers/coolParameters'
+import { setGuestName, shouldAskForGuestName } from './helpers/guestName.js'
+import { getUIDefaults, generateCSSVarTokens, getCollaboraTheme } from './helpers/coolParameters.js'
+import { enableScrollLock } from './helpers/safariFixer.js'
 
 import PostMessageService from './services/postMessage.tsx'
 import {
@@ -19,6 +20,10 @@ const PostMessages = new PostMessageService({
 	parent: window.parent,
 	loolframe: () => document.getElementById('loleafletframe').contentWindow,
 })
+
+if (isDirectEditing()) {
+	enableScrollLock()
+}
 
 let checkingProxyStatus = false
 
@@ -123,19 +128,20 @@ $.widget('oc.guestNamePicker', {
 /**
  * Type definitions for WOPI Post message objects
  *
- * @typedef {Object} View
- * @property {Number} ViewId
+ * @typedef {object} View
+ * @property {number} ViewId
  * @property {string} UserName
  * @property {string} UserId
- * @property {Number} Color
- * @property {Boolean} ReadOnly
- * @property {Boolean} IsCurrentView
+ * @property {number} Color
+ * @property {boolean} ReadOnly
+ * @property {boolean} IsCurrentView
  */
 
 const documentsMain = {
 	isEditorMode: false,
 	isViewerMode: false,
 	isFrameReady: false,
+	isPublic: false,
 	ready: false,
 	fileName: null,
 	baseName: null,
@@ -176,7 +182,7 @@ const documentsMain = {
 				$('#revViewerContainer').prepend($('<div id="revViewer">'))
 			}
 
-			const urlsrc = getWopiUrl({ fileId, title, readOnly: true })
+			const urlsrc = getWopiUrl({ fileId, title, readOnly: true, closeButton: !documentsMain.hideCloseButton })
 
 			// access_token - must be passed via a form post
 			const accessToken = encodeURIComponent(documentsMain.token)
@@ -194,6 +200,7 @@ const documentsMain = {
 
 			$('#revViewer').append(form)
 			$('#revViewer').append(frame)
+			$('#loleafletframe_viewer').focus()
 
 			// submit that
 			$('#loleafletform_viewer').submit()
@@ -231,7 +238,7 @@ const documentsMain = {
 			$(document.body).addClass('claro')
 			$(document.body).prepend(documentsMain.UI.container)
 
-			const urlsrc = getWopiUrl({ fileId, title, readOnly: false, closeButton: true, revisionHistory: !!Config.get('userId') })
+			const urlsrc = getWopiUrl({ fileId, title, readOnly: false, closeButton: !documentsMain.hideCloseButton, revisionHistory: !documentsMain.isPublic })
 
 			// access_token - must be passed via a form post
 			const accessToken = encodeURIComponent(documentsMain.token)
@@ -249,6 +256,7 @@ const documentsMain = {
 
 			$('#mainContainer').append(form)
 			$('#mainContainer').append(frame)
+			$('#loleafletframe').focus()
 
 			emit('richdocuments:wopi-load:started', {
 				wopiFileId: fileId,
@@ -460,7 +468,7 @@ const documentsMain = {
 							const nameInput = $dialog.find('input')[0]
 							nameInput.style.minWidth = '250px'
 							nameInput.style.maxWidth = '400px'
-							nameInput.value = documentsMain.fileName
+							nameInput.value = args.format ? documentsMain.fileName.substring(0, documentsMain.fileName.lastIndexOf('.') + 1) + args.format : documentsMain.fileName
 							nameInput.selectionStart = 0
 							nameInput.selectionEnd = documentsMain.fileName.lastIndexOf('.')
 						})
@@ -517,6 +525,8 @@ const documentsMain = {
 		documentsMain.fileName = Config.get('title')
 		documentsMain.canEdit = Boolean(Config.get('permissions') & OC.PERMISSION_UPDATE)
 		documentsMain.canShare = typeof OC.Share !== 'undefined' && Config.get('permissions') & OC.PERMISSION_SHARE
+		documentsMain.isPublic = !Config.get('userId')
+		documentsMain.hideCloseButton = Config.get('hideCloseButton')
 
 		$('footer,nav').hide()
 		// fade out file list and show the document

@@ -24,13 +24,14 @@
 
 namespace OCA\Richdocuments\AppInfo;
 
-use OC\EventDispatcher\SymfonyAdapter;
-use OC\Files\Type\Detection;
-use OC\Security\CSP\ContentSecurityPolicy;
-use OCA\Files_Sharing\Listener\LoadAdditionalListener;
+use OCA\Files_Sharing\Event\ShareLinkAccessedEvent;
 use OCA\Richdocuments\AppConfig;
 use OCA\Richdocuments\Capabilities;
 use OCA\Richdocuments\ConvertApi;
+use OCA\Richdocuments\Listener\BeforeFetchPreviewListener;
+use OCA\Richdocuments\Listener\CSPListener;
+use OCA\Richdocuments\Listener\LoadViewerListener;
+use OCA\Richdocuments\Listener\ShareLinkListener;
 use OCA\Richdocuments\Middleware\WOPIMiddleware;
 use OCA\Richdocuments\Listener\FileCreatedFromTemplateListener;
 use OCA\Richdocuments\PermissionManager;
@@ -40,8 +41,6 @@ use OCA\Richdocuments\Preview\OOXML;
 use OCA\Richdocuments\Preview\OpenDocument;
 use OCA\Richdocuments\Preview\Pdf;
 use OCA\Richdocuments\Service\CapabilitiesService;
-use OCA\Richdocuments\Service\FederationService;
-use OCA\Richdocuments\Service\InitialStateService;
 use OCA\Richdocuments\Template\CollaboraTemplateProvider;
 use OCA\Richdocuments\WOPI\DiscoveryManager;
 use OCA\Viewer\Event\LoadViewer;
@@ -49,13 +48,14 @@ use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\Template\FileCreatedFromTemplateEvent;
 use OCP\Files\Template\ITemplateManager;
 use OCP\Files\Template\TemplateFileCreator;
 use OCP\IConfig;
 use OCP\IL10N;
 use OCP\IPreview;
+use OCP\Preview\BeforePreviewFetchedEvent;
+use OCP\Security\CSP\AddContentSecurityPolicyEvent;
 
 class Application extends App implements IBootstrap {
 
@@ -63,7 +63,6 @@ class Application extends App implements IBootstrap {
 
 	public function __construct(array $urlParams = array()) {
 		parent::__construct(self::APPNAME, $urlParams);
-		$this->getContainer()->registerCapability(Capabilities::class);
 	}
 
 
@@ -72,20 +71,17 @@ class Application extends App implements IBootstrap {
 		$context->registerCapability(Capabilities::class);
 		$context->registerMiddleWare(WOPIMiddleware::class);
 		$context->registerEventListener(FileCreatedFromTemplateEvent::class, FileCreatedFromTemplateListener::class);
+		$context->registerEventListener(AddContentSecurityPolicyEvent::class, CSPListener::class);
+		$context->registerEventListener(LoadViewer::class, LoadViewerListener::class);
+		$context->registerEventListener(ShareLinkAccessedEvent::class, ShareLinkListener::class);
+		$context->registerEventListener(BeforePreviewFetchedEvent::class, BeforeFetchPreviewListener::class);
 	}
 
 	public function boot(IBootContext $context): void {
-		$currentUser = \OC::$server->getUserSession()->getUser();
-		if($currentUser !== null) {
-			/** @var PermissionManager $permissionManager */
-			$permissionManager = \OC::$server->query(PermissionManager::class);
-			if(!$permissionManager->isEnabledForUser($currentUser)) {
-				return;
-			}
-		}
 
-		$context->injectFn(function(ITemplateManager $templateManager, IL10N $l10n, IConfig $config, CapabilitiesService $capabilitiesService) {
-			if (empty($capabilitiesService->getCapabilities())) {
+
+		$context->injectFn(function (ITemplateManager $templateManager, IL10N $l10n, IConfig $config, CapabilitiesService $capabilitiesService, PermissionManager $permissionManager) {
+			if (!$permissionManager->isEnabledForUser() || empty($capabilitiesService->getCapabilities())) {
 				return;
 			}
 			$ooxml = $config->getAppValue(self::APPNAME, 'doc_format', '') === 'ooxml';
@@ -142,44 +138,19 @@ class Application extends App implements IBootstrap {
 			});
 		});
 
-		$context->injectFn(function (SymfonyAdapter $symfonyAdapter, IEventDispatcher $eventDispatcher, InitialStateService $initialStateService) {
-			$eventDispatcher->addListener(LoadViewer::class, function () use ($initialStateService) {
-				$initialStateService->provideCapabilities();
-				\OCP\Util::addScript('richdocuments', 'richdocuments-viewer', 'viewer');
+		if (class_exists('\OC\Files\Type\TemplateManager')) {
+			$manager = \OC_Helper::getFileTemplateManager();
 
-				$currentUser = \OC::$server->getUserSession()->getUser();
-				if($currentUser !== null && $this->checkConvert()) {
-					\OCP\Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
-					\OCP\Util::addScript('richdocuments', 'richdocuments-odfconvert');
-				}
-			});
+			$manager->registerTemplate('application/vnd.openxmlformats-officedocument.wordprocessingml.document', dirname(__DIR__) . '/emptyTemplates/docxtemplate.docx');
+			$manager->registerTemplate('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', dirname(__DIR__) . '/emptyTemplates/xlsxtemplate.xlsx');
+			$manager->registerTemplate('application/vnd.openxmlformats-officedocument.presentationml.presentation', dirname(__DIR__) . '/emptyTemplates/pptxtemplate.pptx');
+			$manager->registerTemplate('application/vnd.oasis.opendocument.presentation', dirname(__DIR__) . '/emptyTemplates/template.odp');
+			$manager->registerTemplate('application/vnd.oasis.opendocument.text', dirname(__DIR__) . '/emptyTemplates/template.odt');
+			$manager->registerTemplate('application/vnd.oasis.opendocument.spreadsheet', dirname(__DIR__) . '/emptyTemplates/template.ods');
+		}
 
-			$eventDispatcher->addListener('OCA\Files_Sharing::loadAdditionalScripts', function ($event) use ($initialStateService) {
-				$initialStateService->provideCapabilities();
-				\OCP\Util::addScript('richdocuments', 'richdocuments-files');
-
-				$share = $event->getArguments()['share'];
-				if ($this->checkConvert() && ($share->getPermissions() & \OCP\Constants::PERMISSION_CREATE) !== 0) {
-					\OCP\Util::addScript('richdocuments', 'richdocuments-pdforganizeplugin');
-					\OCP\Util::addScript('richdocuments', 'richdocuments-odfconvert');
-				}
-			});
-
-			if (class_exists('\OC\Files\Type\TemplateManager')) {
-				$manager = \OC_Helper::getFileTemplateManager();
-
-				$manager->registerTemplate('application/vnd.openxmlformats-officedocument.wordprocessingml.document', dirname(__DIR__) . '/emptyTemplates/docxtemplate.docx');
-				$manager->registerTemplate('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', dirname(__DIR__) . '/emptyTemplates/xlsxtemplate.xlsx');
-				$manager->registerTemplate('application/vnd.openxmlformats-officedocument.presentationml.presentation', dirname(__DIR__) . '/emptyTemplates/pptxtemplate.pptx');
-				$manager->registerTemplate('application/vnd.oasis.opendocument.presentation', dirname(__DIR__) . '/emptyTemplates/template.odp');
-				$manager->registerTemplate('application/vnd.oasis.opendocument.text', dirname(__DIR__) . '/emptyTemplates/template.odt');
-				$manager->registerTemplate('application/vnd.oasis.opendocument.spreadsheet', dirname(__DIR__) . '/emptyTemplates/template.ods');
-			}
-
-			$this->registerProvider();
-			$this->updateCSP();
-			$this->checkAndEnableCODEServer();
-		});
+		$this->registerProvider();
+		$this->checkAndEnableCODEServer();
 	}
 
 	public function registerProvider() {
@@ -207,68 +178,6 @@ class Application extends App implements IBootstrap {
 		$previewManager->registerProvider('/application\/pdf/', function() use ($container) {
 			return $container->query(Pdf::class);
 		});
-	}
-
-	public function updateCSP() {
-		$container = $this->getContainer();
-
-		// Do not apply CSP rules on WebDAV/OCS
-		// Ideally this could be a middleware running after the controller execution before rendering the result to only do it on page response
-		$scriptNameParts = explode('/', $container->getServer()->getRequest()->getScriptName());
-		$scriptFile = end($scriptNameParts);
-		if ($scriptFile !== 'index.php') {
-			return;
-		}
-
-		$publicWopiUrl = $container->getServer()->getConfig()->getAppValue('richdocuments', 'public_wopi_url', '');
-		$publicWopiUrl = $publicWopiUrl === '' ? \OC::$server->getConfig()->getAppValue('richdocuments', 'wopi_url') : $publicWopiUrl;
-		$cspManager = $container->getServer()->getContentSecurityPolicyManager();
-		$policy = new ContentSecurityPolicy();
-		if ($publicWopiUrl !== '') {
-			$policy->addAllowedFrameDomain('\'self\'');
-			$policy->addAllowedFrameDomain($this->domainOnly($publicWopiUrl));
-			$policy->addAllowedFormActionDomain($this->domainOnly($publicWopiUrl));
-		}
-
-		/**
-		 * Dynamically add CSP for federated editing
-		 */
-		if ($container->getServer()->getAppManager()->isEnabledForUser('federation')) {
-			/** @var FederationService $federationService */
-			$federationService = \OC::$server->query(FederationService::class);
-
-			// Always add trusted servers on global scale
-			/** @var \OCP\GlobalScale\IConfig $globalScale */
-			$globalScale = $container->query(\OCP\GlobalScale\IConfig::class);
-			if ($globalScale->isGlobalScaleEnabled()) {
-				$trustedList = \OC::$server->getConfig()->getSystemValue('gs.trustedHosts', []);
-				foreach ($trustedList as $server) {
-					$policy->addAllowedFrameDomain($server);
-					$this->addTrustedRemote($policy, $server);
-					$policy->addAllowedFormActionDomain($server);
-				}
-			}
-			$remoteAccess = $container->getServer()->getRequest()->getParam('richdocuments_remote_access');
-
-			if ($remoteAccess && $federationService->isTrustedRemote($remoteAccess)) {
-				$this->addTrustedRemote($policy, $remoteAccess);
-			}
-		}
-
-		$cspManager->addDefaultPolicy($policy);
-	}
-
-	private function addTrustedRemote($policy, $url) {
-		$federationService = \OC::$server->get(FederationService::class);
-		try {
-			$remoteCollabora = $federationService->getRemoteCollaboraURL($url);
-			$policy->addAllowedFrameDomain($url);
-			$policy->addAllowedFrameDomain($remoteCollabora);
-		} catch (\Exception $e) {
-			// We can ignore this exception for adding predefined domains to the CSP as it it would then just
-			// reload the page to set a proper allowed frame domain if we don't have a fixed list of trusted
-			// remotes in a global scale scenario
-		}
 	}
 
 	public function checkAndEnableCODEServer() {
@@ -311,27 +220,12 @@ class Application extends App implements IBootstrap {
 			$capabilitiesService->refetch();
 		}
 	}
-
-	/**
-	 * Strips the path and query parameters from the URL.
-	 *
-	 * @param string $url
-	 * @return string
-	 */
-	private function domainOnly($url) {
-		$parsed_url = parse_url($url);
-		$scheme = isset($parsed_url['scheme']) ? $parsed_url['scheme'] . '://' : '';
-		$host	= isset($parsed_url['host']) ? $parsed_url['host'] : '';
-		$port	= isset($parsed_url['port']) ? ':' . $parsed_url['port'] : '';
-		return "$scheme$host$port";
-	}
-
 	/**
 	 * Check convert-to enabled before addScript pdforganizeplugin
 	 *
 	 * @return bool
 	 */
-	private function checkConvert():bool {
+	public function checkConvert():bool {
 		$convert = $this->getContainer()->query(ConvertApi::class);
 		return $convert->isAvailable();
 	}

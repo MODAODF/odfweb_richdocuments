@@ -188,7 +188,7 @@ class TemplateManager {
 	 * @param int $fileId
 	 * @return File
 	 */
-	public function get($fileId) {
+	public function get(int $fileId) {
 		// is this a global template ?
 		$files = $this->getEmptyTemplateDir()->getDirectoryListing();
 
@@ -196,6 +196,10 @@ class TemplateManager {
 			if ($file->getId() === $fileId) {
 				return $file;
 			}
+		}
+
+		if ($this->userId === null && $this->config->getAppValue(Application::APPNAME, 'template_public', 'yes') !== 'yes') {
+			throw new NotFoundException();
 		}
 
 		// is this a global template ?
@@ -308,6 +312,9 @@ class TemplateManager {
 	 * @return File[]
 	 */
 	public function getSystem($type = null) {
+		if ($this->userId === null && $this->config->getAppValue(Application::APPNAME, 'template_public', 'yes') !== 'yes') {
+			return [];
+		}
 		$folder = $this->getSystemTemplateDir();
 
 		$templateFiles = $folder->getDirectoryListing();
@@ -338,6 +345,10 @@ class TemplateManager {
 	 * @return File[]
 	 */
 	public function getUser($type = null) {
+		if ($this->userId === null) {
+			return [];
+		}
+
 		try {
 			$templateDir   = $this->getUserTemplateDir();
 			$templateFiles = $templateDir->getDirectoryListing();
@@ -352,6 +363,10 @@ class TemplateManager {
 	 * @return array
 	 */
 	public function getUserFormatted($type) {
+		if ($this->userId === null) {
+			return [];
+		}
+
 		$templates = $this->getUser($type);
 
 		return array_map(function(File $file) {
@@ -391,8 +406,12 @@ class TemplateManager {
 	 * @return File[]
 	 */
 	public function getAll($type = 'document') {
+		if (!array_key_exists($type, self::$tplTypes)) {
+			return [];
+		}
+
 		$system = $this->getSystem();
-		$user   = $this->getUser();
+		$user = $this->getUser();
 		$templaterepo = [];
 
 		// 取得範本中心各目錄裡的範本檔
@@ -403,10 +422,6 @@ class TemplateManager {
 					$templaterepo = array_merge($templaterepo, $this->getTemplaterepo($id));
 				}
 			}
-		}
-
-		if (!array_key_exists($type, self::$tplTypes)) {
-			return [];
 		}
 
 		return array_values(array_filter(array_merge($user, $system, $templaterepo), function (File $template) use ($type) {
@@ -678,7 +693,7 @@ class TemplateManager {
 			$query = $this->db->getQueryBuilder();
 			$query->select('templateid')
 				->from('richdocuments_template')
-				->where($query->expr()->eq('userid', $query->createNamedParameter($this->userId)))
+				->where($this->userId !== null ? $query->expr()->eq('userid', $query->createNamedParameter($this->userId, IQueryBuilder::PARAM_STR)) : $query->expr()->isNull('userid'))
 				->andWhere($query->expr()->eq('fileid', $query->createNamedParameter($fileId, IQueryBuilder::PARAM_INT)));
 			$result = $query->executeQuery();
 			$templateId = (int)$result->fetchOne();

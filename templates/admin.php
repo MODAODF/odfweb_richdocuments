@@ -8,7 +8,7 @@ script('files', 'jquery.fileupload');
 
 <?php if (false /*$_['settings']['templatesAvailable'] === true*/) { ?>
 <form class="section" id="richdocuments-templates" method="post" action="/template/">
-	<input class="hidden-visually" id="add-template" type="file" />
+	<input name="files" class="hidden-visually" id="add-template" type="file" />
 	<h2>
 		<?php p($l->t('Global templates')) ?>
 		<label for="add-template" class="icon-add" title="<?php p($l->t('Add a new template')); ?>"></label>
@@ -30,7 +30,7 @@ script('files', 'jquery.fileupload');
 			<div class="delete-cover"></div>
 		</li>
 		<?php foreach ($_['settings']['templates'] as $template) {?>
-			<li>
+			<li data-filename="<?php p($template['name']); ?>">
 				<figure>
 					<?php if (isset($template['preview'])) { ?>
 						<img src="<?php p($template['preview']) ?>?y=297&x=210" alt="<?php p($l->t('template preview')) ?>" />

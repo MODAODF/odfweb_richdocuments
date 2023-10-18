@@ -1,5 +1,152 @@
 # Changelog
 
+## 6.3.8
+
+### Added
+
+- feat: add config option mobile_editing [#3157](https://github.com/nextcloud/richdocuments/pull/3157)
+
+## 6.3.7
+
+### Fixed
+
+- fix: Apply proper color values on Collabora 23.05 @juliushaertl [#3117](https://github.com/nextcloud/richdocuments/pull/3117)
+- fix: Revert change of extension which should refer to the new file extension [#3135](https://github.com/nextcloud/richdocuments/pull/3135)
+- fix: Use a proper empty xlsx file [#3127](https://github.com/nextcloud/richdocuments/pull/3127)
+- fix: fix: Provide valid fileList and fileId context on new file action [#3136](https://github.com/nextcloud/richdocuments/pull/3136)
+
+
+## 6.3.6
+
+### Fixed
+
+- Fix file templates on public links @juliushaertl [#2903](https://github.com/nextcloud/richdocuments/pull/2903)
+
+## 6.3.5
+
+### Fixed
+
+- Fix viewer height on safari mobile @julien-nc [#2807](https://github.com/nextcloud/richdocuments/pull/2807)
+- Workaround for en-AU language/locale [#2844](https://github.com/nextcloud/richdocuments/pull/2844)
+- fix: Trigger initial setup earlier [#2850](https://github.com/nextcloud/richdocuments/pull/2850)
+- Hide close button on single file shares that have hide download enabled [#2859](https://github.com/nextcloud/richdocuments/pull/2859)
+
+
+## 6.3.4
+
+### Fixed
+
+- Fix loading share links for logged in users @juliushaertl [#2787](https://github.com/nextcloud/richdocuments/pull/2787)
+- Avoid exception when uploading epub [#2779](https://github.com/nextcloud/richdocuments/pull/2779)
+
+## 6.3.3
+
+### Fixed
+
+- Be less strict with splitting the wopi allow list [#2695](https://github.com/nextcloud/richdocuments/pull/2695)
+- Another attempt to work around Safari issues [#2720](https://github.com/nextcloud/richdocuments/pull/2720)
+- Load viewer scripts depending on share ownership [#2748](https://github.com/nextcloud/richdocuments/pull/2748)
+- Fix creating new files from user templates [#2743](https://github.com/nextcloud/richdocuments/pull/2743)
+- fix: Open pdf files by default on share links if files_pdfviewer is disabled [#2725](https://github.com/nextcloud/richdocuments/pull/2725)
+- Fix IPv6 handling in WOPI allow list [#2710](https://github.com/nextcloud/richdocuments/pull/2710)
+- minimal template.odg (locale agnostic) [#2732](https://github.com/nextcloud/richdocuments/pull/2732)
+- Log info message on wopi ip mismatch [#2691](https://github.com/nextcloud/richdocuments/pull/2691)
+
+
+## 6.3.2
+
+### Fixed
+
+- Improve error handling for global template uploads [#2611](https://github.com/nextcloud/richdocuments/pull/2611)
+- Increase timeout for preview generation [#2633](https://github.com/nextcloud/richdocuments/pull/2633)
+- Fix array access error when requesting preview while not having access to Collabora [#2642](https://github.com/nextcloud/richdocuments/pull/2642)
+- Pass the proper target path/name for new files created through direct editing [#2637](https://github.com/nextcloud/richdocuments/pull/2637)
+- Always show the close button [#2624](https://github.com/nextcloud/richdocuments/pull/2624)
+- Move WOPI checks to the middleware @juliushaertl [#2673](https://github.com/nextcloud/richdocuments/pull/2673)
+- Open PDF files by default when PDF viewer is disabled [#2598](https://github.com/nextcloud/richdocuments/pull/2598)
+- Show warning if "WOPI allow-list" not configured [#2608](https://github.com/nextcloud/richdocuments/pull/2608)
+- Add logging for remote requests [#2654](https://github.com/nextcloud/richdocuments/pull/2654)
+- Fix the return type according to global definition [#2666](https://github.com/nextcloud/richdocuments/pull/2666)
+
+
+## 6.3.1
+
+### Added
+
+- Add app config to override wopi checkFileInfo [#2568](https://github.com/nextcloud/richdocuments/pull/2568)
+
+### Fixed
+
+- Invoke read permission check to trigger terms of services when creating a token [#2563](https://github.com/nextcloud/richdocuments/pull/2563)
+- option to use new grouped saveas [#2555](https://github.com/nextcloud/richdocuments/pull/2555)
+- Do not fail if no directory is passed when creating a file from a template [#2545](https://github.com/nextcloud/richdocuments/pull/2545)
+- Return proper status code if file is not found during writing [#2541](https://github.com/nextcloud/richdocuments/pull/2541)
+- Listen for event during preview rendering and apply secure view options [#2587](https://github.com/nextcloud/richdocuments/pull/2587)
+- Keep passing light theme values to Collabora as long as the dark mode is not available there [#2557](https://github.com/nextcloud/richdocuments/pull/2557)
+- Fix the theming adjustments when accesibility app is disabled @Raudius [#2580](https://github.com/nextcloud/richdocuments/pull/2580)
+
+
+## 6.3.0
+
+### Added
+
+- Add config option to turn on Collabora feature lock for read only users [#2510](https://github.com/nextcloud/richdocuments/pull/2510)
+
+### Fixed
+
+- Only apply hideDownload if share attribute is actually false [#2529](https://github.com/nextcloud/richdocuments/pull/2529)
+- Disable sharing for public links and versions if app is disabled [#2508](https://github.com/nextcloud/richdocuments/pull/2508)
+- Use proper product name in capabilities [#2532](https://github.com/nextcloud/richdocuments/pull/2532)
+
+### Other
+
+- Use correct server version for integration tests @juliushaertl [#2512](https://github.com/nextcloud/richdocuments/pull/2512)
+- Fix `public_wopi_url` variable configuration name [#2505](https://github.com/nextcloud/richdocuments/pull/2505)
+- Pin postgres version @Raudius [#2533](https://github.com/nextcloud/richdocuments/pull/2533)
+- For PDFs rename context menu option to "Open with" @Raudius [#2536](https://github.com/nextcloud/richdocuments/pull/2536)
+
+## 6.2.1
+
+### Added
+
+- Emit event for each user on document open [#2495](https://github.com/nextcloud/richdocuments/pull/2495)
+
+### Fixed
+
+- Updates "productName" in capabilities @Raudius [#2401](https://github.com/nextcloud/richdocuments/pull/2401)
+- fix safari does not focus to document frame on startup [#2377](https://github.com/nextcloud/richdocuments/pull/2377)
+- Fix: hide download option inside Collabora for "hide download" shares [#2391](https://github.com/nextcloud/richdocuments/pull/2391)
+- Hide "Save as" option when downloading is not allowed by s… @Raudius [#2402](https://github.com/nextcloud/richdocuments/pull/2402)
+- Only register templates if enabled for user [#2414](https://github.com/nextcloud/richdocuments/pull/2414)
+
+### Other
+
+- Fix loading file without logged-in when watermark is enable for groups [#2482](https://github.com/nextcloud/richdocuments/pull/2482)
+- Migrate to nextcloud/OCP package in stable24 @nickvergessen [#2479](https://github.com/nextcloud/richdocuments/pull/2479)
+
+## 6.2.0
+
+### Added
+- Allow download prevention on user shares @eneiluj [#2280](https://github.com/nextcloud/richdocuments/pull/2280)
+
+### Fixed
+- Limit capabilities to users that are enabled @juliushaertl [#2328](https://github.com/nextcloud/richdocuments/pull/2328)
+- Fix saving issue when a file is available multiple times in a users home folder @juliushaertl [#2330](https://github.com/nextcloud/richdocuments/pull/2330)
+- Cleanup Content Security Policy handling @juliushaertl [#2234](https://github.com/nextcloud/richdocuments/pull/2234)
+- Fix double-header on public links @marcelklehr [#2312](https://github.com/nextcloud/richdocuments/pull/2312)
+- Fix HTML entities showing in file names @Raudius [#2318](https://github.com/nextcloud/richdocuments/pull/2318)
+- Restored "Open with Nextcloud Office" option from context menu @Raudius [#2318](https://github.com/nextcloud/richdocuments/pull/2318)
+
+## 6.1.1
+
+### Fixed
+
+- Fix filename encoding issues @juliushaertl [#2261](https://github.com/nextcloud/richdocuments/pull/2261)
+
+### Other
+
+- add "is_guest" to extra info user data [#2244](https://github.com/nextcloud/richdocuments/pull/2244)
+
 ## 6.1.0
 
 ### Added

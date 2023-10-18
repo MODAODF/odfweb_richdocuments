@@ -29,6 +29,8 @@ namespace OCA\Richdocuments\Middleware;
 
 use OCA\Richdocuments\AppInfo\Application;
 use OCA\Richdocuments\Controller\WopiController;
+use OCA\Richdocuments\Db\WopiMapper;
+use OCA\Richdocuments\Helper;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -36,6 +38,7 @@ use OCP\AppFramework\Middleware;
 use OCP\Files\NotPermittedException;
 use OCP\IConfig;
 use OCP\IRequest;
+use Psr\Log\LoggerInterface;
 
 class WOPIMiddleware extends Middleware {
 
@@ -43,16 +46,39 @@ class WOPIMiddleware extends Middleware {
 	private $config;
 	/** @var IRequest */
 	private $request;
+	/** @var WopiMapper */
+	private $wopiMapper;
+	/** @var LoggerInterface */
+	private $logger;
 
-	public function __construct(IConfig $config, IRequest $request) {
+	public function __construct(IConfig $config, IRequest $request, WopiMapper $wopiMapper, LoggerInterface $logger) {
 		$this->config = $config;
 		$this->request = $request;
+		$this->wopiMapper = $wopiMapper;
+		$this->logger = $logger;
 	}
 
 	public function beforeController($controller, $methodName) {
 		parent::beforeController($controller, $methodName);
 
 		if ($controller instanceof WopiController && !$this->isWOPIAllowed()) {
+			throw new NotPermittedException();
+		}
+
+		if (!$controller instanceof WopiController) {
+			return;
+		}
+
+		try {
+			$fileId = $this->request->getParam('fileId');
+			$accessToken = $this->request->getParam('access_token');
+			[$fileId, ,] = Helper::parseFileId($fileId);
+			$wopi = $this->wopiMapper->getWopiForToken($accessToken);
+			if ((int)$fileId !== $wopi->getFileid() && (int)$fileId !== $wopi->getTemplateId()) {
+				throw new NotPermittedException();
+			}
+		} catch (\Exception $e) {
+			$this->logger->error('Failed to validate WOPI access', [ 'exception' => $e ]);
 			throw new NotPermittedException();
 		}
 	}
@@ -70,7 +96,7 @@ class WOPIMiddleware extends Middleware {
 		if($allowedRanges === '') {
 			return true;
 		}
-		$allowedRanges = explode(',', $allowedRanges);
+		$allowedRanges = preg_split('/(\s|,|;|\|)+/', $allowedRanges);
 
 		$userIp = $this->request->getRemoteAddress();
 		foreach($allowedRanges as $range) {
@@ -79,6 +105,7 @@ class WOPIMiddleware extends Middleware {
 			}
 		}
 
+		$this->logger->info('WOPI request denied from ' . $userIp . ' as it does not match the configured ranges: ' . implode(', ', $allowedRanges));
 		return false;
 	}
 
@@ -90,7 +117,7 @@ class WOPIMiddleware extends Middleware {
 	private function matchCidr(string $ip, string $range): bool {
 		list($subnet, $bits) = array_pad(explode('/', $range), 2, null);
 		if ($bits === null) {
-			$bits = 32;
+			$bits = strpos($subnet, ':') !== false ? 128 : 32;
 		}
 		$bits = (int)$bits;
 

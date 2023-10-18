@@ -15,10 +15,14 @@ use OCA\Richdocuments\AppInfo\Application;
 use \OCP\IConfig;
 
 class AppConfig {
+	public const WOPI_URL = 'wopi_url';
+	public const PUBLIC_WOPI_URL = 'public_wopi_url';
 
 	public const FEDERATION_USE_TRUSTED_DOMAINS = 'federation_use_trusted_domains';
 
 	public const SYSTEM_GS_TRUSTED_HOSTS = 'gs.trustedHosts';
+
+	public const READ_ONLY_FEATURE_LOCK = 'read_only_feature_lock';
 
 	private $defaults = [
 		'wopi_url' => '',
@@ -116,7 +120,7 @@ class AppConfig {
 	/**
 	 * Returns a list of trusted domains from the gs.trustedHosts config
 	 */
-	public function getTrustedDomains(): array {
+	public function getGlobalScaleTrustedHosts(): array {
 		return $this->config->getSystemValue(self::SYSTEM_GS_TRUSTED_HOSTS, []);
 	}
 
@@ -127,4 +131,49 @@ class AppConfig {
 		return $this->config->getAppValue(Application::APPNAME, self::FEDERATION_USE_TRUSTED_DOMAINS, 'no') === 'yes';
 	}
 
- }
+	public function getCollaboraUrlPublic(): string {
+		return $this->config->getAppValue(Application::APPNAME, self::PUBLIC_WOPI_URL, $this->getCollaboraUrlInternal());
+	}
+
+	public function getCollaboraUrlInternal(): string {
+		return $this->config->getAppValue(Application::APPNAME, self::WOPI_URL, '');
+	}
+
+	public function getUseGroups(): ?array {
+		$groups = $this->config->getAppValue(Application::APPNAME, 'use_groups', '');
+		if ($groups === '') {
+			return null;
+		}
+
+		return $this->splitGroups($groups);
+	}
+
+	public function getEditGroups(): ?array {
+		$groups = $this->config->getAppValue(Application::APPNAME, 'edit_groups', '');
+		if ($groups === '') {
+			return null;
+		}
+
+		return $this->splitGroups($groups);
+	}
+
+	public function isReadOnlyFeatureLocked(): bool {
+		return $this->config->getAppValue(Application::APPNAME, self::READ_ONLY_FEATURE_LOCK, 'no') === 'yes';
+	}
+
+	private function splitGroups(string $groupString): array {
+		return explode('|', $groupString);
+	}
+
+	/**
+	 * Allow to override values from the WOPI checkFileInfo response through app config
+	 */
+	public function getWopiOverride(): array {
+		$wopiOverride = $this->config->getAppValue(Application::APPNAME, 'wopi_override', '');
+		if ($wopiOverride !== '') {
+			$wopiOverride = json_decode($wopiOverride, true);
+			return $wopiOverride ?: [];
+		}
+		return [];
+	}
+}

@@ -1,5 +1,8 @@
+<?php
+
+declare(strict_types=1);
 /**
- * @copyright Copyright (c) 2020 Julius Härtl <jus@bitgrid.net>
+ * @copyright Copyright (c) 2022 Julius Härtl <jus@bitgrid.net>
  *
  * @author Julius Härtl <jus@bitgrid.net>
  *
@@ -17,27 +20,26 @@
  *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
  */
 
-import { getSearchParam } from '../helpers/url'
+namespace OCA\Richdocuments\Events;
 
-const preloadCreate = getSearchParam('richdocuments_create')
-const preloadOpen = getSearchParam('richdocuments_open')
-const Preload = {}
+use OCP\Files\Node;
 
-if (preloadCreate) {
-	Preload.create = {
-		type: getSearchParam('richdocuments_create'),
-		filename: getSearchParam('richdocuments_filename'),
+class DocumentOpenedEvent extends \OCP\EventDispatcher\Event {
+	private ?string $userId;
+	private Node $node;
+
+	public function __construct(?string $userId, Node $node) {
+		$this->userId = $userId;
+		$this->node = $node;
+	}
+
+	public function getUserId(): ?string {
+		return $this->userId;
+	}
+
+	public function getNode(): Node {
+		return $this->node;
 	}
 }
-
-if (preloadOpen) {
-	Preload.open = {
-		filename: preloadOpen,
-		id: getSearchParam('richdocuments_fileId'),
-	}
-}
-
-export default Preload

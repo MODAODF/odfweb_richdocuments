@@ -23,6 +23,7 @@ namespace OCA\Richdocuments;
 
 use InvalidArgumentException;
 use OC\Files\Filesystem;
+use OCA\Files_Sharing\SharedStorage;
 use OCA\Richdocuments\Db\Direct;
 use OCA\Richdocuments\Db\WopiMapper;
 use OCA\Richdocuments\Db\Wopi;
@@ -35,9 +36,9 @@ use OCP\Files\File;
 use OCP\Files\ForbiddenException;
 use OCP\Files\IRootFolder;
 use OCP\Files\Node;
-use OCP\IGroupManager;
+use OCP\Files\NotFoundException;
+use OCP\Files\NotPermittedException;
 use OCP\IURLGenerator;
-use OCP\IUserManager;
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IManager;
 use OCP\IL10N;
@@ -53,22 +54,18 @@ class TokenManager {
 	private $urlGenerator;
 	/** @var Parser */
 	private $wopiParser;
-	/** @var AppConfig */
-	private $appConfig;
 	/** @var string */
 	private $userId;
 	/** @var WopiMapper */
 	private $wopiMapper;
 	/** @var IL10N */
 	private $trans;
-	/** @var IUserManager */
-	private $userManager;
-	/** @var IGroupManager */
-	private $groupManager;
 	/** @var CapabilitiesService */
 	private $capabilitiesService;
 	/** @var Helper */
 	private $helper;
+	/** @var PermissionManager */
+	private $permissionManager;
 
 	public function __construct(
 		IRootFolder $rootFolder,
@@ -76,26 +73,22 @@ class TokenManager {
 		IURLGenerator $urlGenerator,
 		Parser $wopiParser,
 		CapabilitiesService $capabilitiesService,
-		AppConfig $appConfig,
 		$UserId,
 		WopiMapper $wopiMapper,
 		IL10N $trans,
-		IUserManager $userManager,
-		IGroupManager $groupManager,
-		Helper $helper
+		Helper $helper,
+		PermissionManager $permissionManager
 	) {
 		$this->rootFolder = $rootFolder;
 		$this->shareManager = $shareManager;
 		$this->urlGenerator = $urlGenerator;
 		$this->wopiParser = $wopiParser;
 		$this->capabilitiesService = $capabilitiesService;
-		$this->appConfig = $appConfig;
 		$this->trans = $trans;
 		$this->userId = $UserId;
 		$this->wopiMapper = $wopiMapper;
-		$this->userManager = $userManager;
-		$this->groupManager = $groupManager;
 		$this->helper = $helper;
+		$this->permissionManager = $permissionManager;
 	}
 
 	/**
@@ -136,18 +129,21 @@ class TokenManager {
 					}
 				}
 
-				// Check if the editor (user who is accessing) is in editable group
-				// UserCanWrite only if
-				// 1. No edit groups are set or
-				// 2. if they are set, it is in one of the edit groups
-				$editGroups = array_filter(explode('|', $this->appConfig->getAppValue('edit_groups')));
-				$editorUser = $this->userManager->get($editoruid);
-				if ($updatable && count($editGroups) > 0 && $editorUser) {
-					$updatable = false;
-					foreach ($editGroups as $editGroup) {
-						$editorGroup = $this->groupManager->get($editGroup);
-						if ($editorGroup !== null && $editorGroup->inGroup($editorUser)) {
-							$updatable = true;
+				$updatable = $updatable && $this->permissionManager->userCanEdit($editoruid);
+
+				// disable download if at least one shared access has it disabled
+				foreach ($files as $file) {
+					$storage = $file->getStorage();
+					// using string as we have no guarantee that "files_sharing" app is loaded
+					if ($storage->instanceOfStorage(SharedStorage::class)) {
+						if (!method_exists(IShare::class, 'getAttributes')) {
+							break;
+						}
+						/** @var SharedStorage $storage */
+						$share = $storage->getShare();
+						$attributes = $share->getAttributes();
+						if ($attributes !== null && $attributes->getAttribute('permissions', 'download') === false) {
+							$hideDownload = true;
 							break;
 						}
 					}
@@ -189,6 +185,16 @@ class TokenManager {
 			} else {
 				$owneruid = $owner->getUID();
 			}
+		}
+
+		// Check node readability (for storage wrapper overwrites like terms of services)
+		if (!$file->isReadable()) {
+			throw new NotPermittedException();
+		}
+
+		// Safeguard that users without required group permissions cannot create a token
+		if (!$this->permissionManager->isEnabledForUser($owneruid) && !$this->permissionManager->isEnabledForUser($editoruid)) {
+			throw new NotPermittedException();
 		}
 
 		// force read operation to trigger possible audit logging
@@ -251,26 +257,15 @@ class TokenManager {
 		$targetFile = $rootFolder->getById($targetFileId);
 		$targetFile = $targetFile[0] ?? null;
 		if (!$targetFile) {
-			// TODO: Exception
-			return null;
+			throw new NotFoundException();
 		}
-		$updatable = $targetFile->isUpdateable();
-		// Check if the editor (user who is accessing) is in editable group
-		// UserCanWrite only if
-		// 1. No edit groups are set or
-		// 2. if they are set, it is in one of the edit groups
-		$editGroups = array_filter(explode('|', $this->appConfig->getAppValue('edit_groups')));
-		$editorUser = $this->userManager->get($editoruid);
-		if ($updatable && count($editGroups) > 0 && $editorUser) {
-			$updatable = false;
-			foreach($editGroups as $editGroup) {
-				$editorGroup = $this->groupManager->get($editGroup);
-				if ($editorGroup !== null && $editorGroup->inGroup($editorUser)) {
-					$updatable = true;
-					break;
-				}
-			}
+
+		// Check node readability (for storage wrapper overwrites like terms of services)
+		if (!$targetFile->isReadable()) {
+			throw new NotPermittedException();
 		}
+
+		$updatable = $targetFile->isUpdateable() && $this->permissionManager->userCanEdit($editoruid);
 
 		$serverHost = $this->urlGenerator->getAbsoluteURL('/');
 
