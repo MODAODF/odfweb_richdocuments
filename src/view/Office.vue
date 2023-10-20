@@ -66,6 +66,7 @@
 				data-cy="documentframe"
 				class="office-viewer__iframe"
 				:style="{visibility: showIframe ? 'visible' : 'hidden' }"
+				:title="t('richdocuments', 'Document iframe')"
 				:src="src" />
 
 			<ZoteroHint :show.sync="showZotero" @submit="reload" />

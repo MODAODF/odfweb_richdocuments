@@ -229,6 +229,17 @@ OC.L10N.register(
     "Error: [convert-to] type is not set or unsupported.": "錯誤：轉檔類型未指定或不支援",
     "Error: conversion of this file is not supported.": "錯誤：不支援轉換此文件",
     "Allow local address": "允許本地連接",
-    "After enabling, Nextcloud server will allow connections from local address": "允許本地連接後，Nextcloud 伺服器將允許從本地主機發出的連接"
+    "After enabling, Nextcloud server will allow connections from local address": "允許本地連接後，Nextcloud 伺服器將允許從本地主機發出的連接",
+    "Enable preview file API. others can use the preview file API to preview files.": "啟動預覽檔案 API 。其他使用者可以使用預覽檔案的 API 預覽檔案",
+    "Preview file API" : "預覽檔案 API ",
+    "Preview folder holder:" : "預覽隱藏資料夾持有者：",
+    "Set hostname whitelist:" : "設定主機名白名單：",
+    "Add a new hostname" : "新增主機名",
+    "Generate file preview URL" : "產生檔案預覽URL",
+    "Available hostnames:" : "可用的主機名：",
+    "Generate and copy to clipboard" : "產生並複製到剪貼板",
+    "Copied!" : "已複製！",
+    "Document iframe" : "文件內嵌框架",
+    "Server Configuration" : "伺服器設定"
 },
 "nplurals=1; plural=0;");

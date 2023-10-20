@@ -12,11 +12,11 @@ $previewFileApi = $_['previewFileApi'];
 		<label for="templateInputField"><?php p($l->t('Select a template directory')); ?></label>
 		<br />
 		<input type="text" name="templateInputField" id="templateInputField" value="<?php p($_['templateFolder']); ?>" disabled />
-		<button id="templateSelectButton">
+		<button id="templateSelectButton"  aria-label="<?php p($l->t('Select a personal template folder')); ?>">
 			<span class="icon-folder" title="<?php p($l->t('Select a personal template folder')); ?>" data-toggle="tooltip">
 			</span>
 		</button>
-		<button id="templateResetButton">
+		<button id="templateResetButton"  aria-label="<?php p($l->t('Remove personal template folder')); ?>">
 			<span  class="icon-delete" title="<?php p($l->t('Remove personal template folder')); ?>" data-toggle="tooltip"></span>
 		</button>
 	</p>

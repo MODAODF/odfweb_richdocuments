@@ -221,6 +221,19 @@ OC.L10N.register(
     "Converting...({loaded}/{total})": "转档中...({loaded}/{total})",
     "Unable to get file": "无法取得档案",
     "Error: [convert-to] type is not set or unsupported.": "错误：转档类型未指定或不支援",
-    "Error: conversion of this file is not supported.": "错误：不支援转换此文件"
+    "Error: conversion of this file is not supported.": "错误：不支援转换此文件",
+    "Allow local address": "允许本地连接",
+    "After enabling, Nextcloud server will allow connections from local address": "允许本地连接后，Nextcloud 伺服器将允许从本地主机发出的连接",
+    "Enable preview file API. others can use the preview file API to preview files.": "启动预览档案 API 。其他使用者可以使用预览档案的 API 预览档案",
+    "Preview file API" : "预览档案 API ",
+    "Preview folder holder:" : "预览隐藏资料夹持有者：",
+    "Set hostname whitelist:" : "设定主机名白名单：",
+    "Add a new hostname" : "新增主机名",
+    "Generate file preview URL" : "产生档案预览URL",
+    "Available hostnames:" : "可用的主机名：",
+    "Generate and copy to clipboard" : "产生并复制到剪贴板",
+    "Copied!" : "已复制！",
+    "Document iframe" : "文件内嵌框架",
+    "Server Configuration" : "服务器设置"
 },
 "nplurals=1; plural=0;");
