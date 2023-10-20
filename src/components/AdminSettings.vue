@@ -70,6 +70,7 @@
 			</div>
 
 			<fieldset>
+				<legend>{{ t('richdocuments', 'Server Configuration') }}</legend>
 				<div>
 					<input id="customserver"
 						v-model="serverMode"

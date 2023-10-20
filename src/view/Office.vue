@@ -61,7 +61,8 @@
 			<iframe :style="{visibility: showIframe ? 'visible' : 'hidden' }"
 				id="collaboraframe"
 				ref="documentFrame"
-				:src="src" />
+				:src="src"
+				:title="t('richdocuments', 'Document iframe')" />
 		</div>
 	</transition>
 </template>
