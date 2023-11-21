@@ -43,13 +43,15 @@ class LoadViewerListener implements IEventListener {
 	private $permissionManager;
 	/** @var InitialStateService */
 	private $initialStateService;
-
 	private ?string $userId = null;
+	/** @var Application */
+	private $application;
 
-	public function __construct(PermissionManager $permissionManager, InitialStateService $initialStateService, ?string $userId) {
+	public function __construct(PermissionManager $permissionManager, InitialStateService $initialStateService, ?string $userId, Application $application) {
 		$this->permissionManager = $permissionManager;
 		$this->initialStateService = $initialStateService;
 		$this->userId = $userId;
+		$this->application = $application;
 	}
 
 	public function handle(Event $event): void {
@@ -69,7 +71,7 @@ class LoadViewerListener implements IEventListener {
 	}
 
 	private function checkConvert(): bool {
-		$application = \OC::$server->get(Application::class);
+		$application = $this->application;
 		$convertApi = $application->getContainer()->query(ConvertApi::class);
 		return $convertApi->isAvailable();
 	}

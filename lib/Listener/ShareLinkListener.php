@@ -44,10 +44,13 @@ class ShareLinkListener implements \OCP\EventDispatcher\IEventListener {
 	private $permissionManager;
 	/** @var InitialStateService */
 	private $initialStateService;
+	/** @var Application */
+	private $application;
 
-	public function __construct(PermissionManager $permissionManager, InitialStateService $initialStateService) {
+	public function __construct(PermissionManager $permissionManager, InitialStateService $initialStateService, Application $application) {
 		$this->permissionManager = $permissionManager;
 		$this->initialStateService = $initialStateService;
+		$this->application = $application;
 	}
 
 	public function handle(Event $event): void {
@@ -72,7 +75,8 @@ class ShareLinkListener implements \OCP\EventDispatcher\IEventListener {
 	}
 
 	private function checkConvert(): bool {
-		$application = \OC::$server->get(Application::class);
+		// $application = \OC::$server->get(Application::class);
+		$application = $this->application;
 		$convertApi = $application->getContainer()->query(ConvertApi::class);
 		return $convertApi->isAvailable();
 	}
