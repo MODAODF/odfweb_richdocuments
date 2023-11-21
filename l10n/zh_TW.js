@@ -267,6 +267,7 @@ OC.L10N.register(
     "Generate and copy to clipboard" : "產生並複製到剪貼板",
     "Copied!" : "已複製！",
     "Document iframe" : "文件內嵌框架",
-    "Server Configuration" : "伺服器設定"
+    "Server Configuration" : "伺服器設定",
+    "Shared Template Area" : "共用範本專區"
     },
 "nplurals=1; plural=0;");
