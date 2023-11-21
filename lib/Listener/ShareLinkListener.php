@@ -45,7 +45,7 @@ class ShareLinkListener implements \OCP\EventDispatcher\IEventListener {
 	/** @var Application */
 	private $application;
 
-	public function __construct(PermissionManager $permissionManager, InitialStateService $initialStateService) {
+	public function __construct(PermissionManager $permissionManager, InitialStateService $initialStateService, Application $application) {
 		$this->permissionManager = $permissionManager;
 		$this->initialStateService = $initialStateService;
 		$this->application = $application;
