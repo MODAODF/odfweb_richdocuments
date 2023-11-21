@@ -23,8 +23,12 @@ $previewFileApi = $_['previewFileApi'];
 	<p><em>
 		<?php p($l->t('Templates inside of this directory will be added to the template selector of Nextcloud Office.')); ?>
 	</em></p>
-	<p id="personal-odftemplate">前往 <a href="https://odf.moda.gov.tw/QA/public/odftemplate" target="_blank">共用範本專區<span class="icon-external"></span></a></p>
-	<hr>
+	<p id="personal-odftemplate">前往 
+		<a href="https://odf.moda.gov.tw/QA/public/odftemplate" target="_blank">
+			<?php p($l->t('Shared Template Area')); ?>
+			<span class="icon-external"></span>
+		</a>
+	</p>
 	<?php if($previewFileAllowedHosts): ?>
 		<div>
 			<div><?php p($l->t('Generate file preview URL')) ?></div>

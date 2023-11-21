@@ -255,6 +255,7 @@ OC.L10N.register(
     "Set hostname whitelist:" : "設定主機名白名單：",
     "Add a new hostname" : "新增主機名",
     "Document iframe" : "文件內嵌框架",
-    "Server Configuration" : "伺服器設定"
+    "Server Configuration" : "伺服器設定",
+    "Shared Template Area" : "共用範本專區"
     },
 "nplurals=1; plural=0;");
