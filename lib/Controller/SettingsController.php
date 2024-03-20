@@ -164,7 +164,16 @@ class SettingsController extends Controller {
 		$message = $this->l10n->t('Saved');
 
 		if ($wopi_url !== null) {
-			$this->appConfig->setAppValue('wopi_url', $wopi_url);
+			$wopiStatus = $this->capabilitiesService->checkOnlineStatus($wopi_url);
+			if ($wopiStatus) {
+				$this->appConfig->setAppValue('wopi_url', $wopi_url);
+				$this->appConfig->setAppValue('wopi_url_keep', $wopi_url);
+			} elseif (!$wopiStatus) {
+				return new JSONResponse([
+					'status' => 'error',
+					'data' => ['message' => 'Failed to connect to the remote server']
+				], 500);
+			}
 		}
 
 		if ($wopi_allowlist !== null) {

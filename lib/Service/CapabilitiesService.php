@@ -31,6 +31,7 @@ use OCP\ICacheFactory;
 use OCP\IConfig;
 use OCP\IL10N;
 use Psr\Log\LoggerInterface;
+use GuzzleHttp\Client;
 
 class CapabilitiesService {
 	/** @var IConfig */
@@ -125,6 +126,23 @@ class CapabilitiesService {
 
 	public function refetch(): void {
 		$remoteHost = $this->config->getAppValue('richdocuments', 'wopi_url');
+
+		if ($remoteHost === '') {
+			// 檢查若 Online 恢復連線，寫回資料庫 wopi_url 欄位，重新連線
+			$wopi_url_keep = $this->config->getAppValue('richdocuments', 'wopi_url_keep');
+			$wopiStatus = $this->checkOnlineStatus($wopi_url_keep);
+			if ($wopiStatus) {
+				$this->config->setAppValue('richdocuments', 'wopi_url', $wopi_url_keep);
+			}
+		} elseif ($remoteHost) {
+			// 檢查若 Online 無法連線，清空資料庫 wopi_url 欄位，中斷連線
+			$wopiStatus = $this->checkOnlineStatus($remoteHost);
+			if (!$wopiStatus) {
+				$this->config->setAppValue('richdocuments', 'wopi_url', '');
+			}
+		}
+		$remoteHost = $this->config->getAppValue('richdocuments', 'wopi_url');
+		
 		if ($remoteHost === '') {
 			return;
 		}
@@ -160,5 +178,20 @@ class CapabilitiesService {
 		}
 
 		$this->cache->set('capabilities', $capabilities, $ttl);
+	}
+
+	// 檢查 Online 服務狀態
+	public function checkOnlineStatus($wopi_url) {
+		$client = new Client();
+		$options = ['timeout' => 2];
+		try {
+			$response = $client->get($wopi_url, $options);
+			$wopiStatus = $response->getStatusCode();
+			if ($wopiStatus === 200) {
+				return true;
+			}
+		} catch (\Exception $e) {
+			return false;
+		}
 	}
 }
