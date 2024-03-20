@@ -138,8 +138,10 @@ class CapabilitiesService {
 		if ($wopi_url_keep) {
 			// 每隔一段時間可以檢測一次斷線 URL Status(根據 Admin 後台設定，預設 60秒)
 			$timestamp = $this->config->getAppValue('richdocuments', 'time_stamp');
-			// $timeInterval = $this->config->getAppValue('richdocuments', 'time_interval');
-			if ($timestamp + 60 <= time()) {
+			$timeIntervalMin = $this->config->getAppValue('richdocuments', 'time_interval');
+			if ($timeIntervalMin !== '') $timeIntervalSec = $timeIntervalMin * 60;
+			else $timeIntervalSec = 60;
+			if ($timestamp + $timeIntervalSec <= time()) {
 				$wopiStatus = $this->checkOnlineStatus($wopi_url_keep);
 				if ($wopiStatus) {
 					$this->config->setAppValue('richdocuments', 'wopi_url', $wopi_url_keep);

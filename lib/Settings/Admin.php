@@ -99,7 +99,8 @@ class Admin implements ISettings {
 					'web_server' => strtolower($_SERVER['SERVER_SOFTWARE']),
 					'os_family' => PHP_VERSION_ID >= 70200 ? PHP_OS_FAMILY : PHP_OS,
 					'platform' => php_uname('m'),
-					'wopi_url_keep' => $this->config->getAppValue('richdocuments', 'wopi_url_keep')
+					'wopi_url_keep' => $this->config->getAppValue('richdocuments', 'wopi_url_keep'),
+					'time_interval' => $this->config->getAppValue('richdocuments', 'time_interval'),
 				],
 			],
 			'blank'

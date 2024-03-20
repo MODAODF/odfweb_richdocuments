@@ -238,6 +238,25 @@
 		</Modal>
 		-->
 
+		<div class="section">
+			<h2>{{ t('richdocuments', 'Set time interval to reconnect the OxOffice Online server') }}</h2>
+			<p class="option-inline">
+				<em>{{ t('richdocuments', 'When the OxOffice Online server disconnected, try to reconnect automatically until the connection is sucecessful.') }}</em>
+				<em>{{ t('richdocuments', ' (Deafult: 1 minute)') }}</em>
+			</p>
+			<p class="option-inline">
+				{{ t('richdocuments', 'Time Interval: ') }}
+				<input id="reconnect-time-interval"
+					type="number"
+					v-model="settings.timeInterval">
+				{{ t('richdocuments', ' minute(s) ') }}
+				<input type="button"
+					:disabled="updating"
+					:value="t('richdocuments', 'Save')"
+					@click="updatetimeInterval(settings.timeInterval)">
+			</p>
+		</div>
+
 		<!-- section: [odfweb] 連結至 online 管理後台 -->
 		<div v-if="isSetup" id="config-console" class="section">
 			<h2>{{ t('richdocuments', 'config console') }}</h2>
@@ -555,6 +574,7 @@ export default {
 				demoUrl: null,
 				wopi_url: null,
 				wopi_url_keep: null,
+				timeInterval: 1,
 				watermark: {
 					enabled: false,
 					shareAll: false,
@@ -667,6 +687,10 @@ export default {
 		// Online 服務中斷時，所保留的原 wopi_url
 		if (this.initial.settings.wopi_url_keep && this.initial.settings.wopi_url_keep.length > 0) {
 			this.settings.wopi_url_keep = this.initial.settings.wopi_url_keep
+		}
+
+		if (this.initial.settings.time_interval && this.initial.settings.time_interval.length > 0) {
+			this.settings.timeInterval = this.initial.settings.time_interval
 		}
 		this.checkIfDemoServerIsActive()
 	},
@@ -872,6 +896,15 @@ export default {
 				console.error(e)
 			}
 		},
+		async updatetimeInterval(timeInterval) {
+			try {
+				await this.updateSettings({
+					time_interval: timeInterval
+				})
+			} catch (e) {
+				console.error(e)
+			}
+		},
 	},
 }
 </script>
@@ -982,5 +1015,10 @@ export default {
 
 	input#reconnect-button {
 		margin-left: 5px;
+	}
+
+	input#reconnect-time-interval {
+		width: 50px;
+		text-align: center;
 	}
 </style>

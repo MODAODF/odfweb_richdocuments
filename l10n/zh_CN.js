@@ -266,6 +266,11 @@ OC.L10N.register(
     "Server Configuration" : "服务器设置",
     "Shared Template Area" : "共享模板区",
     " has been disconnected": " 已中断连线",
-    "Reconnect": "重新连线"
+    "Reconnect": "重新连线",
+    "Set time interval to reconnect the OxOffice Online server": "设定重新连线 OxOffice Online 服务器的时间间隔",
+    "When the OxOffice Online server disconnected, try to reconnect automatically until the connection is sucecessful.": "当 OxOffice Online 服务器中断连线，自动尝试重新连线，直到连线成功。",
+    " (Deafult: 1 minute)": " (预设：1 分钟)",
+    "Time Interval: ": "间隔时间：",
+    " minute(s) ": " 分钟 "
 },
 "nplurals=1; plural=0;");
