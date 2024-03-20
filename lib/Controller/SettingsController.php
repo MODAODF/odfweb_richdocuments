@@ -123,6 +123,7 @@ class SettingsController extends Controller{
 	 * @param string $doc_format
 	 * @param string $external_apps
 	 * @param string $canonical_webroot
+	 * @param string $reconnect_url
 	 * @return JSONResponse
 	 */
 	public function setSettings($wopi_url,
@@ -136,19 +137,32 @@ class SettingsController extends Controller{
 								$saveToOdf,
 								$previewFile,
 								$allowConvert,
-								$allowLocalAddress) {
+								$allowLocalAddress,
+								$reconnect_url) {
 		$message = $this->l10n->t('Saved');
 
 		if ($wopi_url !== null){
 			$wopiStatus = $this->capabilitiesService->checkOnlineStatus($wopi_url);
 			if ($wopiStatus) {
 				$this->appConfig->setAppValue('wopi_url', $wopi_url);
-				$this->appConfig->setAppValue('wopi_url_keep', $wopi_url);
+				$this->appConfig->setAppValue('wopi_url_keep', '');
 			} elseif (!$wopiStatus) {
 				return new JSONResponse([
 					'status' => 'error',
 					'data' => ['message' => 'Failed to connect to the remote server']
 				], 500);
+			}
+		}
+
+		if ($reconnect_url !== null) {
+			$wopiStatus = $this->capabilitiesService->checkOnlineStatus($reconnect_url);
+			if ($wopiStatus) {
+				$this->appConfig->setAppValue('wopi_url_keep', '');
+				$response = ['status' => 'success'];
+				return new JSONResponse($response);
+			} else {
+				$response = ['status' => 'error'];
+				return new JSONResponse($response);
 			}
 		}
 

@@ -98,7 +98,8 @@ class Admin implements ISettings {
 					'demo_servers' => $this->demoService->fetchDemoServers(),
 					'web_server' => strtolower($_SERVER['SERVER_SOFTWARE']),
 					'os_family' => PHP_VERSION_ID >= 70200 ? PHP_OS_FAMILY : PHP_OS,
-					'platform' => php_uname('m')
+					'platform' => php_uname('m'),
+					'wopi_url_keep' => $this->config->getAppValue('richdocuments', 'wopi_url_keep')
 				],
 			],
 			'blank'
