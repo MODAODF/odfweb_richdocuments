@@ -125,24 +125,34 @@ class CapabilitiesService {
 	}
 
 	public function refetch(): void {
-		$remoteHost = $this->config->getAppValue('richdocuments', 'wopi_url');
-
-		if ($remoteHost === '') {
-			// 檢查若 Online 恢復連線，寫回資料庫 wopi_url 欄位，重新連線
-			$wopi_url_keep = $this->config->getAppValue('richdocuments', 'wopi_url_keep');
-			$wopiStatus = $this->checkOnlineStatus($wopi_url_keep);
-			if ($wopiStatus) {
-				$this->config->setAppValue('richdocuments', 'wopi_url', $wopi_url_keep);
-			}
-		} elseif ($remoteHost) {
+		$wopi_url = $this->config->getAppValue('richdocuments', 'wopi_url');
+		if ($wopi_url) {
 			// 檢查若 Online 無法連線，清空資料庫 wopi_url 欄位，中斷連線
-			$wopiStatus = $this->checkOnlineStatus($remoteHost);
+			$wopiStatus = $this->checkOnlineStatus($wopi_url);
 			if (!$wopiStatus) {
+				$this->config->setAppValue('richdocuments', 'wopi_url_keep', $wopi_url);
+				$this->config->setAppValue('richdocuments', 'time_stamp', time());
 				$this->config->setAppValue('richdocuments', 'wopi_url', '');
 			}
 		}
+
+		$wopi_url_keep = $this->config->getAppValue('richdocuments', 'wopi_url_keep');
+		if ($wopi_url_keep) {
+			// 每隔一段時間可以檢測一次斷線 URL Status(根據 Admin 後台設定，預設 60秒)
+			$timestamp = $this->config->getAppValue('richdocuments', 'time_stamp');
+			// $timeInterval = $this->config->getAppValue('richdocuments', 'time_interval');
+			if ($timestamp + 60 <= time()) {
+				$wopiStatus = $this->checkOnlineStatus($wopi_url_keep);
+				if ($wopiStatus) {
+					$this->config->setAppValue('richdocuments', 'wopi_url', $wopi_url_keep);
+					$this->config->setAppValue('richdocuments', 'wopi_url_keep', '');
+				} elseif (!$wopiStatus) {
+					$this->config->setAppValue('richdocuments', 'time_stamp', time());
+				}
+			}
+		}
+
 		$remoteHost = $this->config->getAppValue('richdocuments', 'wopi_url');
-		
 		if ($remoteHost === '') {
 			return;
 		}
@@ -182,10 +192,11 @@ class CapabilitiesService {
 
 	// 檢查 Online 服務狀態
 	public function checkOnlineStatus($wopi_url) {
-		$client = new Client();
-		$options = ['timeout' => 2];
+		$capabilitiesEndpoint = rtrim($wopi_url, '/') . '/hosting/capabilities';
+		$client = $this->clientService->newClient();
+		$options = ['timeout' => 2, 'nextcloud' => ['allow_local_address' => true]];
 		try {
-			$response = $client->get($wopi_url, $options);
+			$response = $client->get($capabilitiesEndpoint, $options);
 			$wopiStatus = $response->getStatusCode();
 			if ($wopiStatus === 200) {
 				return true;

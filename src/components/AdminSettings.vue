@@ -106,6 +106,19 @@
 							</p>
 						</form>
 					</div>
+					<div v-if="settings.wopi_url_keep && settings.wopi_url_keep !== ''">
+						<span id="security-warning-state-failure">
+							<span class="icon icon-close-white" />
+							<span class="msg warning">
+								{{ settings.wopi_url_keep }} {{ t('richdocuments', ' has been disconnected') }}
+							</span>
+							<input id="reconnect-button"
+								type="button"
+								:value="t('richdocuments', 'Reconnect')"
+								:disabled="updating"
+								@click="updateReconnectUrl(settings.wopi_url_keep)">
+						</span>
+					</div>
 				</div>
 				<!--
 				<div v-if="CODECompatible">
@@ -577,6 +590,7 @@ export default {
 				allowLocalAddress: false,
 				demoUrl: null,
 				wopi_url: null,
+				wopi_url_keep: null,
 				watermark: {
 					enabled: false,
 					shareAll: false,
@@ -699,6 +713,11 @@ export default {
 			this.CODEInstalled = 'richdocumentscode_arm64' in OC.appswebroots
 			this.CODEAppID = 'richdocumentscode_arm64'
 		}
+
+		// Online 服務中斷時，所保留的原 wopi_url
+		if (this.initial.settings.wopi_url_keep && this.initial.settings.wopi_url_keep.length > 0) {
+			this.settings.wopi_url_keep = this.initial.settings.wopi_url_keep
+		}
 		this.checkIfDemoServerIsActive()
 	},
 	methods: {
@@ -805,6 +824,7 @@ export default {
 					showWarning('Could not connect to the /hosting/capabilities endpoint. Please check if your webserver configuration is up to date.')
 				}
 			}
+			this.settings.wopi_url_keep = ''
 			this.checkIfDemoServerIsActive()
 		},
 		async addAllowedHostname() {
@@ -926,6 +946,19 @@ export default {
 				this.settings.fonts.splice(index, 1)
 			}
 		},
+		async updateReconnectUrl(reconnectUrl) {
+			try {
+				const resp = await this.updateSettings({
+					reconnect_url: reconnectUrl
+				})
+				if (resp.data.status === 'success') {
+					this.settings.wopi_url = reconnectUrl
+					await this.updateServer()
+				}
+			} catch (e) {
+				console.error(e)
+			}
+		},
 	},
 }
 </script>
@@ -1033,5 +1066,9 @@ export default {
 		button {
 			float: right;
 		}
+	}
+
+	input#reconnect-button {
+		margin-left: 5px;
 	}
 </style>

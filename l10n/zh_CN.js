@@ -235,6 +235,8 @@ OC.L10N.register(
     "Copied!" : "已复制！",
     "Document iframe" : "文件内嵌框架",
     "Server Configuration" : "服务器设置",
-    "Shared Template Area" : "共享模板区"
+    "Shared Template Area" : "共享模板区",
+    " has been disconnected": " 已中断连线",
+    "Reconnect": "重新连线"
 },
 "nplurals=1; plural=0;");
