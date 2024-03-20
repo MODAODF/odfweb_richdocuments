@@ -243,6 +243,11 @@ OC.L10N.register(
     "Server Configuration" : "伺服器設定",
     "Shared Template Area" : "共用範本專區",
     " has been disconnected": " 已中斷連線",
-    "Reconnect": "重新連線"
+    "Reconnect": "重新連線",
+    "Set time interval to reconnect the OxOffice Online server": "設定重新連線 OxOffice Online 伺服器的時間間隔",
+    "When the OxOffice Online server disconnected, try to reconnect automatically until the connection is sucecessful.": "當 OxOffice Online 伺服器中斷連線，自動嘗試重新連線，直到連線成功。",
+    " (Deafult: 1 minute)": " (預設：1 分鐘)",
+    "Time Interval: ": "間隔時間：",
+    " minute(s) ": " 分鐘 "
 },
 "nplurals=1; plural=0;");

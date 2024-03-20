@@ -148,6 +148,7 @@ class SettingsController extends Controller {
 	 * @param string $external_apps
 	 * @param string $canonical_webroot
 	 * @param string $reconnect_url
+	 * @param number $time_interval
 	 * @return JSONResponse
 	 */
 	public function setSettings($wopi_url,
@@ -162,7 +163,8 @@ class SettingsController extends Controller {
 		$previewFile,
 		$allowConvert,
 		$allowLocalAddress,
-		$reconnect_url) {
+		$reconnect_url,
+		$time_interval) {
 		$message = $this->l10n->t('Saved');
 
 		if ($wopi_url !== null) {
@@ -261,6 +263,10 @@ class SettingsController extends Controller {
 			$this->appConfig->setAppValue('preview_file_allowed_hosts', implode(',', array_unique($previewFile['allowedHosts'])) ?: '');
 			// $this->appConfig->setAppValue('preview_file_max_size_in_MB', $previewFile['maxSizeInMB']);
 			// $this->appConfig->setAppValue('preview_file_allowed_formats', implode(',', array_unique($previewFile['allowedFormats'])) ?: '');
+		}
+
+		if ($time_interval !== null) {
+			$this->appConfig->setAppValue('time_interval', $time_interval);
 		}
 
 		$this->discoveryManager->refetch();
