@@ -196,7 +196,7 @@ class CapabilitiesService {
 	public function checkOnlineStatus($wopi_url) {
 		$capabilitiesEndpoint = rtrim($wopi_url, '/') . '/hosting/capabilities';
 		$client = $this->clientService->newClient();
-		$options = ['timeout' => 2, 'nextcloud' => ['allow_local_address' => true]];
+		$options = ['timeout' => 2, 'nextcloud' => ['allow_local_address' => true], 'verify' => false];
 		try {
 			$response = $client->get($capabilitiesEndpoint, $options);
 			$wopiStatus = $response->getStatusCode();
