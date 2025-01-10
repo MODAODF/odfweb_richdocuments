@@ -33,7 +33,7 @@
 		"test:unit": "vendor/bin/phpunit -c tests/phpunit.xml"
 	},
 	"require": {
-		"chillerlan/php-qrcode": "^4.3"
+		"chillerlan/php-qrcode": "^5.0"
 	},
 	"autoload-dev": {
 		"psr-4": {
